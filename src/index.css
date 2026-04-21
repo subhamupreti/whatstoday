@@ -150,3 +150,12 @@
   .scroll-hide::-webkit-scrollbar { display: none; }
   .scroll-hide { -ms-overflow-style: none; scrollbar-width: none; }
 }
+
+/* Hide Lovable badge on published deployments */
+#lovable-badge,
+[id="lovable-badge"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
