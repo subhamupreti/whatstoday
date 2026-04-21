@@ -118,17 +118,17 @@ export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onSh
             )}
           </button>
 
-          {isOwner && (
-            <div className="flex items-center gap-1">
-              {onShare && (
-                <button
-                  onClick={() => onShare(task)}
-                  aria-label="Share"
-                  className="text-muted-foreground hover:text-primary transition-colors p-1"
-                >
-                  <Share2 size={16} />
-                </button>
-              )}
+          <div className="flex items-center gap-1">
+            {isOwner && onShare && (
+              <button
+                onClick={() => onShare(task)}
+                aria-label="Share"
+                className="text-muted-foreground hover:text-primary transition-colors p-1"
+              >
+                <Share2 size={16} />
+              </button>
+            )}
+            {isOwner && (
               <button
                 onClick={() => onEdit(task)}
                 aria-label="Edit"
@@ -136,8 +136,15 @@ export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onSh
               >
                 <Pencil size={16} />
               </button>
-            </div>
-          )}
+            )}
+            <button
+              onClick={() => onDelete(task.id)}
+              aria-label="Delete"
+              className="text-muted-foreground hover:text-destructive transition-colors p-1"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
         </div>
       </motion.div>
     </div>
