@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Copy, Share2, Loader2 } from "lucide-react";
+import { Copy, Share2, Loader2, Link2 } from "lucide-react";
 import type { Task } from "@/types/task";
 
 interface Props {
@@ -16,6 +16,8 @@ interface Props {
 export function ShareDialog({ task, open, onOpenChange }: Props) {
   const [code, setCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const link = code ? `${window.location.origin}/join/${code}` : null;
 
   const generate = async () => {
     if (!task) return;
@@ -32,10 +34,31 @@ export function ShareDialog({ task, open, onOpenChange }: Props) {
     setCode(data as string);
   };
 
-  const copy = async () => {
+  const copyCode = async () => {
     if (!code) return;
     await navigator.clipboard.writeText(code);
     toast.success("Code copied");
+  };
+
+  const copyLink = async () => {
+    if (!link) return;
+    await navigator.clipboard.writeText(link);
+    toast.success("Link copied");
+  };
+
+  const nativeShare = async () => {
+    if (!link || !task) return;
+    const text = `Join my task "${task.title}" on WHAT'S TODAY? Code: ${code}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "WHAT'S TODAY?", text, url: link });
+      } else {
+        await navigator.clipboard.writeText(`${text}\n${link}`);
+        toast.success("Share message copied");
+      }
+    } catch {
+      /* user cancelled */
+    }
   };
 
   return (
@@ -52,35 +75,51 @@ export function ShareDialog({ task, open, onOpenChange }: Props) {
             <Share2 size={18} /> Share task
           </DialogTitle>
           <DialogDescription>
-            Anyone with the code can view this task and mark it complete. They cannot edit or delete it.
+            Anyone with the code or link can view this task and mark it complete. They cannot edit
+            or delete it.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
           <p className="font-semibold truncate">{task?.title}</p>
 
-          {code ? (
-            <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-bold">
-                Share code
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  readOnly
-                  value={code}
-                  className="font-mono text-2xl tracking-[0.5em] text-center font-bold"
-                />
-                <Button onClick={copy} variant="outline" size="icon" aria-label="Copy">
-                  <Copy size={16} />
-                </Button>
+          {code && link ? (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-bold">
+                  6-digit code
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    readOnly
+                    value={code}
+                    className="font-mono text-2xl tracking-[0.5em] text-center font-bold"
+                  />
+                  <Button onClick={copyCode} variant="outline" size="icon" aria-label="Copy code">
+                    <Copy size={16} />
+                  </Button>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Share this 6-digit code. Recipients enter it on the Today page.
-              </p>
+
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-bold">
+                  Share link
+                </label>
+                <div className="flex gap-2">
+                  <Input readOnly value={link} className="text-xs" />
+                  <Button onClick={copyLink} variant="outline" size="icon" aria-label="Copy link">
+                    <Link2 size={16} />
+                  </Button>
+                </div>
+              </div>
+
+              <Button onClick={nativeShare} className="w-full btn-velocity text-primary-foreground">
+                <Share2 size={16} /> Share link…
+              </Button>
             </div>
           ) : (
             <Button onClick={generate} disabled={loading} className="w-full btn-velocity text-primary-foreground">
-              {loading ? <Loader2 className="animate-spin" size={16} /> : "Generate share code"}
+              {loading ? <Loader2 className="animate-spin" size={16} /> : "Generate share code & link"}
             </Button>
           )}
         </div>
