@@ -40,10 +40,14 @@ export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onSh
     ? new Date(task.due_date).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
     : null;
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const requestDelete = () => setConfirmOpen(true);
+
   const onDragEnd = (_: unknown, info: { offset: { x: number } }) => {
     if (info.offset.x < -120) {
-      animate(x, -400, { duration: 0.18 });
-      setTimeout(() => onDelete(task.id), 160);
+      animate(x, 0, { type: "spring", stiffness: 400, damping: 32 });
+      requestDelete();
     } else {
       animate(x, 0, { type: "spring", stiffness: 400, damping: 32 });
     }
