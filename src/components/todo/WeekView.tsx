@@ -3,6 +3,7 @@ import { TaskCard } from "./TaskCard";
 import { addDays, format, isSameDay, startOfWeek } from "date-fns";
 import { Plus } from "lucide-react";
 import { useMemo } from "react";
+import type { SelectionProps } from "./selection";
 
 export function WeekView({
   tasks,
@@ -13,6 +14,10 @@ export function WeekView({
   onAddForDate,
   onShare,
   onOpen,
+  selectable,
+  selectedIds,
+  onToggleSelect,
+  onLongPress,
 }: {
   tasks: Task[];
   currentUserId: string;
@@ -22,7 +27,7 @@ export function WeekView({
   onAddForDate: (d: Date) => void;
   onShare: (t: Task) => void;
   onOpen: (t: Task) => void;
-}) {
+} & SelectionProps) {
   const start = startOfWeek(new Date(), { weekStartsOn: 1 });
   const days = useMemo(() => Array.from({ length: 7 }).map((_, i) => addDays(start, i)), [start]);
 

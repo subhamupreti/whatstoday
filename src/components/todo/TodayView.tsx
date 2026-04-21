@@ -5,6 +5,7 @@ import { EmptyState } from "./EmptyState";
 import { JoinCodeCard } from "./JoinCodeCard";
 import { isSameDay } from "date-fns";
 import { useMemo } from "react";
+import type { SelectionProps } from "./selection";
 
 const priorityRank = { high: 0, medium: 1, low: 2 } as const;
 
@@ -17,6 +18,10 @@ export function TodayView({
   onAdd,
   onShare,
   onOpen,
+  selectable,
+  selectedIds,
+  onToggleSelect,
+  onLongPress,
 }: {
   tasks: Task[];
   currentUserId: string;
@@ -26,7 +31,7 @@ export function TodayView({
   onAdd: () => void;
   onShare: (t: Task) => void;
   onOpen: (t: Task) => void;
-}) {
+} & SelectionProps) {
   const today = new Date();
   const todays = useMemo(() => {
     return tasks
