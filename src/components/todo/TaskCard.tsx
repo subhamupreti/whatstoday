@@ -31,10 +31,6 @@ export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onSh
     : null;
 
   const onDragEnd = (_: unknown, info: { offset: { x: number } }) => {
-    if (!isOwner) {
-      animate(x, 0, { type: "spring", stiffness: 400, damping: 32 });
-      return;
-    }
     if (info.offset.x < -120) {
       animate(x, -400, { duration: 0.18 });
       setTimeout(() => onDelete(task.id), 160);
@@ -47,18 +43,16 @@ export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onSh
 
   return (
     <div className="relative">
-      {isOwner && (
-        <motion.div
-          style={{ opacity: bgOpacity }}
-          className="absolute inset-0 rounded-2xl bg-destructive flex items-center justify-end pr-6"
-        >
-          <Trash2 className="text-destructive-foreground" size={20} />
-        </motion.div>
-      )}
+      <motion.div
+        style={{ opacity: bgOpacity }}
+        className="absolute inset-0 rounded-2xl bg-destructive flex items-center justify-end pr-6"
+      >
+        <Trash2 className="text-destructive-foreground" size={20} />
+      </motion.div>
 
       <motion.div
         ref={ref}
-        drag={isOwner ? "x" : false}
+        drag="x"
         dragConstraints={{ left: -200, right: 0 }}
         dragElastic={0.15}
         style={{ x }}
