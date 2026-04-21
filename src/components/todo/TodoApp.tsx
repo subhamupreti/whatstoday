@@ -14,7 +14,17 @@ import { TaskSheet } from "./TaskSheet";
 import { ShareDialog } from "./ShareDialog";
 import { TaskDetailSheet } from "./TaskDetailSheet";
 import { useOverdueAlerts } from "@/hooks/useOverdueAlerts";
-import { Plus } from "lucide-react";
+import { Plus, WifiOff, RefreshCw } from "lucide-react";
+import {
+  enqueue,
+  getOutbox,
+  isOnline,
+  loadCachedTasks,
+  outboxSize,
+  removeFromOutbox,
+  saveCachedTasks,
+  type OutboxOp,
+} from "@/lib/offlineStore";
 
 export function TodoApp({ user }: { user: User }) {
   const navigate = useNavigate();
@@ -26,34 +36,106 @@ export function TodoApp({ user }: { user: User }) {
   const [defaultDate, setDefaultDate] = useState<Date | null>(null);
   const [shareTask, setShareTask] = useState<Task | null>(null);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+  const [online, setOnline] = useState(isOnline());
+  const [pendingCount, setPendingCount] = useState(0);
 
   useOverdueAlerts(tasks);
 
+  const refreshPending = useCallback(async () => {
+    setPendingCount(await outboxSize());
+  }, []);
+
   const fetchTasks = useCallback(async () => {
+    if (!isOnline()) {
+      const cached = await loadCachedTasks();
+      if (cached) setTasks(cached);
+      setLoading(false);
+      return;
+    }
     const { data, error } = await supabase
       .from("tasks")
       .select("*")
       .order("due_date", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false });
     if (error) {
-      toast.error(error.message);
+      // Network/permission failure — fall back to cache silently.
+      const cached = await loadCachedTasks();
+      if (cached) setTasks(cached);
+      else toast.error(error.message);
     } else {
-      setTasks((data ?? []) as Task[]);
+      const list = (data ?? []) as Task[];
+      setTasks(list);
+      saveCachedTasks(list);
     }
     setLoading(false);
   }, []);
 
+  // Replay one queued op against Supabase. Returns true on success.
+  const runOp = useCallback(
+    async (op: OutboxOp): Promise<boolean> => {
+      if (op.kind === "create") {
+        const { error } = await supabase.from("tasks").insert({
+          user_id: op.payload.user_id,
+          title: op.payload.title,
+          description: op.payload.description ?? null,
+          priority: op.payload.priority ?? "medium",
+          tags: op.payload.tags ?? [],
+          music_links: op.payload.music_links ?? [],
+          due_date: op.payload.due_date ?? null,
+        });
+        return !error;
+      }
+      if (op.kind === "update") {
+        const { error } = await supabase.from("tasks").update(op.patch).eq("id", op.taskId);
+        return !error;
+      }
+      if (op.kind === "toggle") {
+        const { error } = await supabase
+          .from("tasks")
+          .update({ status: op.nextStatus, completed_at: op.completedAt })
+          .eq("id", op.taskId);
+        return !error;
+      }
+      if (op.kind === "delete") {
+        const { error } = await supabase.from("tasks").delete().eq("id", op.taskId);
+        return !error;
+      }
+      return false;
+    },
+    [],
+  );
+
+  const flushOutbox = useCallback(async () => {
+    if (!isOnline()) return;
+    const ops = await getOutbox();
+    if (!ops.length) return;
+    let synced = 0;
+    for (const op of ops) {
+      const ok = await runOp(op);
+      if (ok) {
+        await removeFromOutbox(op.id);
+        synced++;
+      } else {
+        // Stop on first failure so order is preserved; will retry next flush.
+        break;
+      }
+    }
+    await refreshPending();
+    if (synced > 0) {
+      toast.success(`Synced ${synced} offline change${synced > 1 ? "s" : ""}`);
+      fetchTasks();
+    }
+  }, [runOp, refreshPending, fetchTasks]);
+
   useEffect(() => {
     fetchTasks();
+    refreshPending();
+    flushOutbox();
+
     // Realtime: listen to ALL task changes (RLS filters server-side to owned + shared).
-    // Unique channel names per user prevent collisions if multiple tabs share state.
     const tasksCh = supabase
       .channel(`tasks-realtime-${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "tasks" },
-        () => fetchTasks(),
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => fetchTasks())
       .subscribe();
     const sharesCh = supabase
       .channel(`task-shares-realtime-${user.id}`)
@@ -64,84 +146,145 @@ export function TodoApp({ user }: { user: User }) {
       )
       .subscribe();
 
-    // Fallback refetch when tab regains focus / becomes visible — covers cases
-    // where the realtime socket dropped silently (mobile sleep, network blips).
-    const onFocus = () => fetchTasks();
-    const onVisible = () => {
-      if (document.visibilityState === "visible") fetchTasks();
+    const onFocus = () => {
+      flushOutbox();
+      fetchTasks();
     };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        flushOutbox();
+        fetchTasks();
+      }
+    };
+    const onOnline = () => {
+      setOnline(true);
+      toast.success("Back online — syncing");
+      flushOutbox();
+      fetchTasks();
+    };
+    const onOffline = () => {
+      setOnline(false);
+      toast.warning("You're offline — changes will sync later");
+    };
+
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
 
     return () => {
       supabase.removeChannel(tasksCh);
       supabase.removeChannel(sharesCh);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
     };
-  }, [user.id, fetchTasks]);
+  }, [user.id, fetchTasks, flushOutbox, refreshPending]);
 
   const upsertTask = async (payload: NewTask, id?: string): Promise<void> => {
+    const nowIso = new Date().toISOString();
+
     if (id) {
-      const { error } = await supabase
-        .from("tasks")
-        .update({
-          title: payload.title,
-          description: payload.description ?? null,
-          priority: payload.priority ?? "medium",
-          tags: payload.tags ?? [],
-          music_links: payload.music_links ?? [],
-          due_date: payload.due_date ?? null,
-        })
-        .eq("id", id);
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-      toast.success("Task updated");
-    } else {
-      const { error } = await supabase.from("tasks").insert({
-        user_id: user.id,
+      const patch = {
         title: payload.title,
         description: payload.description ?? null,
         priority: payload.priority ?? "medium",
         tags: payload.tags ?? [],
         music_links: payload.music_links ?? [],
         due_date: payload.due_date ?? null,
-      });
-      if (error) {
-        toast.error(error.message);
-        return;
+      };
+      // Optimistic local update
+      setTasks((t) => t.map((x) => (x.id === id ? { ...x, ...patch, updated_at: nowIso } : x)));
+
+      if (isOnline()) {
+        const { error } = await supabase.from("tasks").update(patch).eq("id", id);
+        if (error) {
+          await enqueue({ kind: "update", taskId: id, patch });
+          await refreshPending();
+          toast.message("Saved offline — will sync");
+        } else {
+          toast.success("Task updated");
+        }
+      } else {
+        await enqueue({ kind: "update", taskId: id, patch });
+        await refreshPending();
+        toast.message("Saved offline — will sync");
       }
-      toast.success("Task added");
+    } else {
+      const tempId = `local-${nowIso}-${Math.random().toString(36).slice(2, 6)}`;
+      const optimistic: Task = {
+        id: tempId,
+        user_id: user.id,
+        title: payload.title,
+        description: payload.description ?? null,
+        status: "pending",
+        priority: payload.priority ?? "medium",
+        tags: payload.tags ?? [],
+        music_links: payload.music_links ?? [],
+        due_date: payload.due_date ?? null,
+        completed_at: null,
+        created_at: nowIso,
+        updated_at: nowIso,
+      };
+      setTasks((t) => [optimistic, ...t]);
+
+      const insertPayload = { ...payload, user_id: user.id };
+      if (isOnline()) {
+        const { error } = await supabase.from("tasks").insert({
+          user_id: user.id,
+          title: payload.title,
+          description: payload.description ?? null,
+          priority: payload.priority ?? "medium",
+          tags: payload.tags ?? [],
+          music_links: payload.music_links ?? [],
+          due_date: payload.due_date ?? null,
+        });
+        if (error) {
+          await enqueue({ kind: "create", tempId, payload: insertPayload });
+          await refreshPending();
+          toast.message("Saved offline — will sync");
+        } else {
+          toast.success("Task added");
+        }
+      } else {
+        await enqueue({ kind: "create", tempId, payload: insertPayload });
+        await refreshPending();
+        toast.message("Saved offline — will sync");
+      }
     }
+
     setSheetOpen(false);
     setEditing(null);
     setDefaultDate(null);
-    // Immediate refresh so the new/updated task appears even if realtime is slow.
-    fetchTasks();
+    if (isOnline()) fetchTasks();
+    else saveCachedTasks(tasks);
   };
 
   const toggleStatus = async (task: Task) => {
     const next = task.status === "pending" ? "completed" : "pending";
-    // optimistic
+    const completedAt = next === "completed" ? new Date().toISOString() : null;
     setTasks((t) =>
-      t.map((x) =>
-        x.id === task.id
-          ? { ...x, status: next, completed_at: next === "completed" ? new Date().toISOString() : null }
-          : x,
-      ),
+      t.map((x) => (x.id === task.id ? { ...x, status: next, completed_at: completedAt } : x)),
     );
-    const { error } = await supabase
-      .from("tasks")
-      .update({
-        status: next,
-        completed_at: next === "completed" ? new Date().toISOString() : null,
-      })
-      .eq("id", task.id);
-    if (error) {
-      toast.error(error.message);
-      fetchTasks();
+
+    if (task.id.startsWith("local-")) {
+      // Local-only task that hasn't synced yet — keep change in cache only.
+      return;
+    }
+
+    if (isOnline()) {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ status: next, completed_at: completedAt })
+        .eq("id", task.id);
+      if (error) {
+        await enqueue({ kind: "toggle", taskId: task.id, nextStatus: next, completedAt });
+        await refreshPending();
+      }
+    } else {
+      await enqueue({ kind: "toggle", taskId: task.id, nextStatus: next, completedAt });
+      await refreshPending();
     }
   };
 
@@ -157,10 +300,16 @@ export function TodoApp({ user }: { user: User }) {
 
     const performDelete = async () => {
       if (undone) return;
-      const { error } = await supabase.from("tasks").delete().eq("id", id);
-      if (error) {
-        toast.error(error.message);
-        fetchTasks();
+      if (id.startsWith("local-")) return; // Never reached server
+      if (isOnline()) {
+        const { error } = await supabase.from("tasks").delete().eq("id", id);
+        if (error) {
+          await enqueue({ kind: "delete", taskId: id });
+          await refreshPending();
+        }
+      } else {
+        await enqueue({ kind: "delete", taskId: id });
+        await refreshPending();
       }
     };
 
@@ -172,7 +321,6 @@ export function TodoApp({ user }: { user: User }) {
         onClick: () => {
           undone = true;
           if (timer) clearTimeout(timer);
-          // Restore in UI; DB row was never removed.
           setTasks((t) => (t.some((x) => x.id === id) ? t : [...t, target]));
           toast.dismiss(toastId);
           toast.success("Restored");
@@ -228,9 +376,30 @@ export function TodoApp({ user }: { user: User }) {
             <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2">
               {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
             </p>
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-8">
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-3">
               {view === "today" ? "WHAT'S TODAY?" : heading}
             </h1>
+            {(!online || pendingCount > 0) && (
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider">
+                {!online ? (
+                  <>
+                    <WifiOff size={12} className="text-muted-foreground" />
+                    <span className="text-muted-foreground">Offline</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw size={12} className="text-primary animate-spin" />
+                    <span className="text-primary">Syncing</span>
+                  </>
+                )}
+                {pendingCount > 0 && (
+                  <span className="text-muted-foreground normal-case tracking-normal">
+                    · {pendingCount} pending
+                  </span>
+                )}
+              </div>
+            )}
+            {!(!online || pendingCount > 0) && <div className="mb-8" />}
 
             {loading ? (
               <SkeletonList />

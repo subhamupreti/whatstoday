@@ -38,6 +38,42 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         navigateFallbackDenylist: [/^\/~oauth/, /^\/join\//, /^\/auth/],
         cleanupOutdatedCaches: true,
+        // Cache app shell + static assets generously, plus images for offline notes.
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest,woff,woff2}"],
+        runtimeCaching: [
+          {
+            // Images (including pasted note images served from /assets)
+            urlPattern: ({ request }) => request.destination === "image",
+            handler: "CacheFirst",
+            options: {
+              cacheName: "wt-images",
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+          {
+            // Google fonts
+            urlPattern: /^https:\/\/fonts\.(?:gstatic|googleapis)\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "wt-fonts",
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
+            },
+          },
+          {
+            // Supabase reads (GET) — stale-while-revalidate so offline still serves a copy.
+            urlPattern: ({ url, request }) =>
+              request.method === "GET" &&
+              url.hostname.endsWith("supabase.co") &&
+              url.pathname.startsWith("/rest/"),
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "wt-supabase-rest",
+              networkTimeoutSeconds: 4,
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
     }),
   ].filter(Boolean),
