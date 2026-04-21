@@ -2,12 +2,11 @@ import type { Task, NewTask, TaskPriority } from "@/types/task";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Trash2 } from "lucide-react";
+import { RichTextEditor } from "./RichTextEditor";
 
 const priorities: { value: TaskPriority; label: string }[] = [
   { value: "low", label: "Low" },
@@ -102,14 +101,15 @@ export function TaskSheet({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="desc">Notes</Label>
-            <Textarea
-              id="desc"
+            <Label>Notes</Label>
+            <RichTextEditor
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional details"
-              rows={3}
+              onChange={setDescription}
+              placeholder="Add details, paste or drop images…"
             />
+            <p className="text-[10px] text-muted-foreground">
+              Tip: paste or drop an image to embed it. Max 1.5MB.
+            </p>
           </div>
 
           <div className="space-y-2">

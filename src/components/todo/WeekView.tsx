@@ -12,6 +12,7 @@ export function WeekView({
   onDelete,
   onAddForDate,
   onShare,
+  onOpen,
 }: {
   tasks: Task[];
   currentUserId: string;
@@ -20,6 +21,7 @@ export function WeekView({
   onDelete: (id: string) => void;
   onAddForDate: (d: Date) => void;
   onShare: (t: Task) => void;
+  onOpen: (t: Task) => void;
 }) {
   const start = startOfWeek(new Date(), { weekStartsOn: 1 });
   const days = useMemo(() => Array.from({ length: 7 }).map((_, i) => addDays(start, i)), [start]);
@@ -63,7 +65,7 @@ export function WeekView({
               <ul className="space-y-3">
                 {dayTasks.map((t) => (
                   <li key={t.id}>
-                    <TaskCard task={t} currentUserId={currentUserId} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onShare={onShare} />
+                    <TaskCard task={t} currentUserId={currentUserId} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onShare={onShare} onOpen={onOpen} />
                   </li>
                 ))}
               </ul>

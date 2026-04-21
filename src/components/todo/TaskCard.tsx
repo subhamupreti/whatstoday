@@ -27,9 +27,10 @@ interface Props {
   onEdit: (t: Task) => void;
   onDelete: (id: string) => void;
   onShare?: (t: Task) => void;
+  onOpen?: (t: Task) => void;
 }
 
-export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onShare }: Props) {
+export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onShare, onOpen }: Props) {
   const isOwner = task.user_id === currentUserId;
   const x = useMotionValue(0);
   const ref = useRef<HTMLDivElement>(null);
@@ -98,7 +99,7 @@ export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onSh
 
           <button
             type="button"
-            onClick={() => isOwner && onEdit(task)}
+            onClick={() => (onOpen ? onOpen(task) : isOwner && onEdit(task))}
             className="flex-1 text-left min-w-0"
           >
             <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -128,7 +129,9 @@ export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onSh
               {task.title}
             </h3>
             {task.description && (
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
+              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                {task.description.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()}
+              </p>
             )}
           </button>
 
