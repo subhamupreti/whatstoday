@@ -11,6 +11,7 @@ import { SettingsView } from "./SettingsView";
 import { BottomNav, type ViewKey } from "./BottomNav";
 import { TaskSheet } from "./TaskSheet";
 import { ShareDialog } from "./ShareDialog";
+import { useOverdueAlerts } from "@/hooks/useOverdueAlerts";
 import { Plus } from "lucide-react";
 
 export function TodoApp({ user }: { user: User }) {
@@ -21,6 +22,8 @@ export function TodoApp({ user }: { user: User }) {
   const [editing, setEditing] = useState<Task | null>(null);
   const [defaultDate, setDefaultDate] = useState<Date | null>(null);
   const [shareTask, setShareTask] = useState<Task | null>(null);
+
+  useOverdueAlerts(tasks);
 
   const fetchTasks = useCallback(async () => {
     const { data, error } = await supabase
@@ -97,6 +100,8 @@ export function TodoApp({ user }: { user: User }) {
     setSheetOpen(false);
     setEditing(null);
     setDefaultDate(null);
+    // Immediate refresh so the new/updated task appears even if realtime is slow.
+    fetchTasks();
   };
 
   const toggleStatus = async (task: Task) => {
