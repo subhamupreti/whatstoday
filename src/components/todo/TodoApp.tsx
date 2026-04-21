@@ -11,6 +11,7 @@ import { SettingsView } from "./SettingsView";
 import { BottomNav, type ViewKey } from "./BottomNav";
 import { TaskSheet } from "./TaskSheet";
 import { ShareDialog } from "./ShareDialog";
+import { useOverdueAlerts } from "@/hooks/useOverdueAlerts";
 import { Plus } from "lucide-react";
 
 export function TodoApp({ user }: { user: User }) {
