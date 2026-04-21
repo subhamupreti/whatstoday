@@ -90,7 +90,7 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
     const current = editor.getHTML();
     const incoming = value || "";
     if (incoming !== current && !(incoming === "" && current === "<p></p>")) {
-      editor.commands.setContent(incoming, false);
+      editor.commands.setContent(incoming, { emitUpdate: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, editor]);
