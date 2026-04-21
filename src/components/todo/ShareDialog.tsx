@@ -68,14 +68,14 @@ export function ShareDialog({ task, open, onOpenChange }: Props) {
                 <Input
                   readOnly
                   value={code}
-                  className="font-mono text-lg tracking-[0.3em] text-center font-bold"
+                  className="font-mono text-2xl tracking-[0.5em] text-center font-bold"
                 />
                 <Button onClick={copy} variant="outline" size="icon" aria-label="Copy">
                   <Copy size={16} />
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Share this code. Recipients enter it under Settings → Join task.
+                Share this 6-digit code. Recipients enter it on the Today page.
               </p>
             </div>
           ) : (
