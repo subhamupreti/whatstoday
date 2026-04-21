@@ -65,7 +65,19 @@ export function WeekView({
               <ul className="space-y-3">
                 {dayTasks.map((t) => (
                   <li key={t.id}>
-                    <TaskCard task={t} currentUserId={currentUserId} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onShare={onShare} onOpen={onOpen} />
+                    <TaskCard
+                      task={t}
+                      currentUserId={currentUserId}
+                      onToggle={onToggle}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      onShare={onShare}
+                      onOpen={onOpen}
+                      selectable={selectable}
+                      selected={selectedIds?.has(t.id)}
+                      onToggleSelect={onToggleSelect}
+                      onLongPress={onLongPress}
+                    />
                   </li>
                 ))}
               </ul>
