@@ -23,6 +23,8 @@ export function TodoApp({ user }: { user: User }) {
   const [defaultDate, setDefaultDate] = useState<Date | null>(null);
   const [shareTask, setShareTask] = useState<Task | null>(null);
 
+  useOverdueAlerts(tasks);
+
   const fetchTasks = useCallback(async () => {
     const { data, error } = await supabase
       .from("tasks")
@@ -98,6 +100,8 @@ export function TodoApp({ user }: { user: User }) {
     setSheetOpen(false);
     setEditing(null);
     setDefaultDate(null);
+    // Immediate refresh so the new/updated task appears even if realtime is slow.
+    fetchTasks();
   };
 
   const toggleStatus = async (task: Task) => {
