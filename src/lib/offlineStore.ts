@@ -62,6 +62,10 @@ export async function removeFromOutbox(id: string): Promise<void> {
   await outboxStore.removeItem(id);
 }
 
+export async function clearOutbox(): Promise<void> {
+  await outboxStore.clear();
+}
+
 export async function outboxSize(): Promise<number> {
   return outboxStore.length();
 }
