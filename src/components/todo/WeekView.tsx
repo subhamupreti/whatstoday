@@ -6,16 +6,20 @@ import { useMemo } from "react";
 
 export function WeekView({
   tasks,
+  currentUserId,
   onToggle,
   onEdit,
   onDelete,
   onAddForDate,
+  onShare,
 }: {
   tasks: Task[];
+  currentUserId: string;
   onToggle: (t: Task) => void;
   onEdit: (t: Task) => void;
   onDelete: (id: string) => void;
   onAddForDate: (d: Date) => void;
+  onShare: (t: Task) => void;
 }) {
   const start = startOfWeek(new Date(), { weekStartsOn: 1 });
   const days = useMemo(() => Array.from({ length: 7 }).map((_, i) => addDays(start, i)), [start]);
@@ -59,7 +63,7 @@ export function WeekView({
               <ul className="space-y-3">
                 {dayTasks.map((t) => (
                   <li key={t.id}>
-                    <TaskCard task={t} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} />
+                    <TaskCard task={t} currentUserId={currentUserId} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onShare={onShare} />
                   </li>
                 ))}
               </ul>

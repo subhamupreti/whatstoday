@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      task_shares: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["share_role"]
+          share_code: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["share_role"]
+          share_code: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["share_role"]
+          share_code?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_shares_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           completed_at: string | null
@@ -61,9 +96,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_task_share: {
+        Args: {
+          _role?: Database["public"]["Enums"]["share_role"]
+          _task_id: string
+        }
+        Returns: string
+      }
+      generate_share_code: { Args: never; Returns: string }
+      has_share_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["share_role"]
+          _task_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      has_task_access: {
+        Args: { _task_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_task_owner: {
+        Args: { _task_id: string; _user_id: string }
+        Returns: boolean
+      }
+      join_task_by_code: { Args: { _code: string }; Returns: string }
     }
     Enums: {
+      share_role: "viewer" | "completer"
       task_priority: "low" | "medium" | "high"
       task_status: "pending" | "completed"
     }
@@ -193,6 +253,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      share_role: ["viewer", "completer"],
       task_priority: ["low", "medium", "high"],
       task_status: ["pending", "completed"],
     },

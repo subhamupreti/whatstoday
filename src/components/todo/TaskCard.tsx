@@ -1,6 +1,6 @@
 import type { Task } from "@/types/task";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2, Pencil, Share2, Users } from "lucide-react";
 import { useRef } from "react";
 import { cn } from "@/lib/utils";
 
@@ -12,12 +12,15 @@ const priorityStyles: Record<Task["priority"], { label: string; cls: string; bar
 
 interface Props {
   task: Task;
+  currentUserId: string;
   onToggle: (t: Task) => void;
   onEdit: (t: Task) => void;
   onDelete: (id: string) => void;
+  onShare?: (t: Task) => void;
 }
 
-export function TaskCard({ task, onToggle, onEdit, onDelete }: Props) {
+export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onShare }: Props) {
+  const isOwner = task.user_id === currentUserId;
   const x = useMotionValue(0);
   const ref = useRef<HTMLDivElement>(null);
   const bgOpacity = useTransform(x, [-160, -40, 0], [1, 0.4, 0]);
@@ -27,9 +30,12 @@ export function TaskCard({ task, onToggle, onEdit, onDelete }: Props) {
     ? new Date(task.due_date).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
     : null;
 
-  const onDragEnd = (_: any, info: { offset: { x: number } }) => {
+  const onDragEnd = (_: unknown, info: { offset: { x: number } }) => {
+    if (!isOwner) {
+      animate(x, 0, { type: "spring", stiffness: 400, damping: 32 });
+      return;
+    }
     if (info.offset.x < -120) {
-      // animate out then delete
       animate(x, -400, { duration: 0.18 });
       setTimeout(() => onDelete(task.id), 160);
     } else {
@@ -41,16 +47,18 @@ export function TaskCard({ task, onToggle, onEdit, onDelete }: Props) {
 
   return (
     <div className="relative">
-      <motion.div
-        style={{ opacity: bgOpacity }}
-        className="absolute inset-0 rounded-2xl bg-destructive flex items-center justify-end pr-6"
-      >
-        <Trash2 className="text-destructive-foreground" size={20} />
-      </motion.div>
+      {isOwner && (
+        <motion.div
+          style={{ opacity: bgOpacity }}
+          className="absolute inset-0 rounded-2xl bg-destructive flex items-center justify-end pr-6"
+        >
+          <Trash2 className="text-destructive-foreground" size={20} />
+        </motion.div>
+      )}
 
       <motion.div
         ref={ref}
-        drag="x"
+        drag={isOwner ? "x" : false}
         dragConstraints={{ left: -200, right: 0 }}
         dragElastic={0.15}
         style={{ x }}
@@ -61,10 +69,8 @@ export function TaskCard({ task, onToggle, onEdit, onDelete }: Props) {
         )}
       >
         <div className="flex items-start gap-4">
-          {/* Priority bar */}
           <div className={cn("w-1 self-stretch rounded-full", ps.bar)} aria-hidden />
 
-          {/* Checkbox */}
           <button
             onClick={() => onToggle(task)}
             aria-label={completed ? "Mark incomplete" : "Mark complete"}
@@ -82,16 +88,20 @@ export function TaskCard({ task, onToggle, onEdit, onDelete }: Props) {
             )}
           </button>
 
-          {/* Body */}
           <button
             type="button"
-            onClick={() => onEdit(task)}
+            onClick={() => isOwner && onEdit(task)}
             className="flex-1 text-left min-w-0"
           >
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider", ps.cls)}>
                 {ps.label}
               </span>
+              {!isOwner && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-accent/15 text-accent border border-accent/25 inline-flex items-center gap-1">
+                  <Users size={10} /> Shared
+                </span>
+              )}
               {time && (
                 <span className="text-[10px] text-muted-foreground font-medium tabular-nums">
                   {time}
@@ -114,13 +124,26 @@ export function TaskCard({ task, onToggle, onEdit, onDelete }: Props) {
             )}
           </button>
 
-          <button
-            onClick={() => onEdit(task)}
-            aria-label="Edit"
-            className="text-muted-foreground hover:text-foreground transition-colors p-1 hidden sm:block"
-          >
-            <Pencil size={16} />
-          </button>
+          {isOwner && (
+            <div className="flex items-center gap-1">
+              {onShare && (
+                <button
+                  onClick={() => onShare(task)}
+                  aria-label="Share"
+                  className="text-muted-foreground hover:text-primary transition-colors p-1"
+                >
+                  <Share2 size={16} />
+                </button>
+              )}
+              <button
+                onClick={() => onEdit(task)}
+                aria-label="Edit"
+                className="text-muted-foreground hover:text-foreground transition-colors p-1 hidden sm:block"
+              >
+                <Pencil size={16} />
+              </button>
+            </div>
+          )}
         </div>
       </motion.div>
     </div>

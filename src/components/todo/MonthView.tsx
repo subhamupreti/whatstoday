@@ -18,16 +18,20 @@ import { cn } from "@/lib/utils";
 
 export function MonthView({
   tasks,
+  currentUserId,
   onSelectDate,
   onEdit,
   onToggle,
   onDelete,
+  onShare,
 }: {
   tasks: Task[];
+  currentUserId: string;
   onSelectDate: (d: Date) => void;
   onEdit: (t: Task) => void;
   onToggle: (t: Task) => void;
   onDelete: (id: string) => void;
+  onShare: (t: Task) => void;
 }) {
   const [cursor, setCursor] = useState(new Date());
   const [selected, setSelected] = useState<Date>(new Date());
@@ -134,7 +138,7 @@ export function MonthView({
           <ul className="space-y-3">
             {dayTasks.map((t) => (
               <li key={t.id}>
-                <TaskCard task={t} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} />
+                <TaskCard task={t} currentUserId={currentUserId} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onShare={onShare} />
               </li>
             ))}
           </ul>

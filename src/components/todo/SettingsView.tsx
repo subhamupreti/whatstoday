@@ -1,17 +1,38 @@
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Moon, Sun } from "lucide-react";
+import { LogOut, Moon, Sun, Users } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export function SettingsView({ user }: { user: User }) {
   const [isDark, setIsDark] = useState(document.documentElement.classList.contains("dark"));
+  const [code, setCode] = useState("");
+  const [joining, setJoining] = useState(false);
 
   const toggleTheme = () => {
     const next = !isDark;
     setIsDark(next);
     document.documentElement.classList.toggle("dark", next);
     localStorage.setItem("wt-theme", next ? "dark" : "light");
+  };
+
+  const join = async () => {
+    const trimmed = code.trim().toUpperCase();
+    if (trimmed.length < 4) {
+      toast.error("Enter a valid code");
+      return;
+    }
+    setJoining(true);
+    const { error } = await supabase.rpc("join_task_by_code", { _code: trimmed });
+    setJoining(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Task joined");
+    setCode("");
   };
 
   return (
@@ -30,8 +51,30 @@ export function SettingsView({ user }: { user: User }) {
           </div>
         </div>
         <Button variant="outline" onClick={toggleTheme}>
-          Switch
+          Switch to {isDark ? "Light" : "Dark"}
         </Button>
+      </div>
+
+      <div className="glass-bezel rounded-3xl p-5 space-y-3">
+        <div className="flex items-center gap-3">
+          <Users size={20} />
+          <div>
+            <p className="font-semibold">Join a shared task</p>
+            <p className="text-xs text-muted-foreground">Enter a code to view & complete a task.</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Input
+            placeholder="ABCD2345"
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            maxLength={12}
+            className="font-mono tracking-[0.3em] uppercase"
+          />
+          <Button onClick={join} disabled={joining} className="btn-velocity text-primary-foreground">
+            Join
+          </Button>
+        </div>
       </div>
 
       <Button
