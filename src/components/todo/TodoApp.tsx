@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Task, NewTask } from "@/types/task";
@@ -28,6 +28,7 @@ import {
 
 export function TodoApp({ user }: { user: User }) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState<ViewKey>("today");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
