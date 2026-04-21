@@ -2,6 +2,7 @@ import type { Task } from "@/types/task";
 import { TaskCard } from "./TaskCard";
 import { ProgressRing } from "./ProgressRing";
 import { EmptyState } from "./EmptyState";
+import { JoinCodeCard } from "./JoinCodeCard";
 import { isSameDay } from "date-fns";
 import { useMemo } from "react";
 
@@ -64,6 +65,8 @@ export function TodayView({
           </p>
         </div>
       </div>
+
+      <JoinCodeCard />
 
       {todays.length === 0 ? (
         <EmptyState
