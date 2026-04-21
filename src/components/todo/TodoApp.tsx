@@ -376,9 +376,30 @@ export function TodoApp({ user }: { user: User }) {
             <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2">
               {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
             </p>
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-8">
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-3">
               {view === "today" ? "WHAT'S TODAY?" : heading}
             </h1>
+            {(!online || pendingCount > 0) && (
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider">
+                {!online ? (
+                  <>
+                    <WifiOff size={12} className="text-amber-400" />
+                    <span className="text-amber-400">Offline</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw size={12} className="text-primary animate-spin" />
+                    <span className="text-primary">Syncing</span>
+                  </>
+                )}
+                {pendingCount > 0 && (
+                  <span className="text-muted-foreground normal-case tracking-normal">
+                    · {pendingCount} pending
+                  </span>
+                )}
+              </div>
+            )}
+            {!(!online || pendingCount > 0) && <div className="mb-8" />}
 
             {loading ? (
               <SkeletonList />
