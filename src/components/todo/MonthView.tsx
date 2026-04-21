@@ -24,6 +24,7 @@ export function MonthView({
   onToggle,
   onDelete,
   onShare,
+  onOpen,
 }: {
   tasks: Task[];
   currentUserId: string;
@@ -32,6 +33,7 @@ export function MonthView({
   onToggle: (t: Task) => void;
   onDelete: (id: string) => void;
   onShare: (t: Task) => void;
+  onOpen: (t: Task) => void;
 }) {
   const [cursor, setCursor] = useState(new Date());
   const [selected, setSelected] = useState<Date>(new Date());
@@ -138,7 +140,7 @@ export function MonthView({
           <ul className="space-y-3">
             {dayTasks.map((t) => (
               <li key={t.id}>
-                <TaskCard task={t} currentUserId={currentUserId} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onShare={onShare} />
+                <TaskCard task={t} currentUserId={currentUserId} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onShare={onShare} onOpen={onOpen} />
               </li>
             ))}
           </ul>

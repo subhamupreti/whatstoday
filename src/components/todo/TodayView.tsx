@@ -16,6 +16,7 @@ export function TodayView({
   onDelete,
   onAdd,
   onShare,
+  onOpen,
 }: {
   tasks: Task[];
   currentUserId: string;
@@ -24,6 +25,7 @@ export function TodayView({
   onDelete: (id: string) => void;
   onAdd: () => void;
   onShare: (t: Task) => void;
+  onOpen: (t: Task) => void;
 }) {
   const today = new Date();
   const todays = useMemo(() => {
@@ -79,7 +81,7 @@ export function TodayView({
         <ul className="space-y-3">
           {todays.map((t) => (
             <li key={t.id}>
-              <TaskCard task={t} currentUserId={currentUserId} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onShare={onShare} />
+              <TaskCard task={t} currentUserId={currentUserId} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onShare={onShare} onOpen={onOpen} />
             </li>
           ))}
         </ul>
@@ -93,7 +95,7 @@ export function TodayView({
           <ul className="space-y-3">
             {undated.map((t) => (
               <li key={t.id}>
-                <TaskCard task={t} currentUserId={currentUserId} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onShare={onShare} />
+                <TaskCard task={t} currentUserId={currentUserId} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onShare={onShare} onOpen={onOpen} />
               </li>
             ))}
           </ul>

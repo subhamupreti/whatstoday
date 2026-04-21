@@ -11,6 +11,7 @@ import { SettingsView } from "./SettingsView";
 import { BottomNav, type ViewKey } from "./BottomNav";
 import { TaskSheet } from "./TaskSheet";
 import { ShareDialog } from "./ShareDialog";
+import { TaskDetailSheet } from "./TaskDetailSheet";
 import { useOverdueAlerts } from "@/hooks/useOverdueAlerts";
 import { Plus } from "lucide-react";
 
@@ -22,6 +23,7 @@ export function TodoApp({ user }: { user: User }) {
   const [editing, setEditing] = useState<Task | null>(null);
   const [defaultDate, setDefaultDate] = useState<Date | null>(null);
   const [shareTask, setShareTask] = useState<Task | null>(null);
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
 
   useOverdueAlerts(tasks);
 
@@ -176,6 +178,12 @@ export function TodoApp({ user }: { user: User }) {
     setSheetOpen(true);
   };
 
+  const openDetail = (task: Task) => setDetailTaskId(task.id);
+  const detailTask = useMemo(
+    () => (detailTaskId ? tasks.find((t) => t.id === detailTaskId) ?? null : null),
+    [detailTaskId, tasks],
+  );
+
   const heading = useMemo(() => {
     return { today: "Today", week: "This Week", month: "This Month", settings: "Settings" }[view];
   }, [view]);
@@ -211,11 +219,11 @@ export function TodoApp({ user }: { user: User }) {
             {loading ? (
               <SkeletonList />
             ) : view === "today" ? (
-              <TodayView tasks={tasks} currentUserId={user.id} onToggle={toggleStatus} onEdit={openEdit} onDelete={deleteTask} onAdd={() => openNew()} onShare={setShareTask} />
+              <TodayView tasks={tasks} currentUserId={user.id} onToggle={toggleStatus} onEdit={openEdit} onDelete={deleteTask} onAdd={() => openNew()} onShare={setShareTask} onOpen={openDetail} />
             ) : view === "week" ? (
-              <WeekView tasks={tasks} currentUserId={user.id} onToggle={toggleStatus} onEdit={openEdit} onDelete={deleteTask} onAddForDate={openNew} onShare={setShareTask} />
+              <WeekView tasks={tasks} currentUserId={user.id} onToggle={toggleStatus} onEdit={openEdit} onDelete={deleteTask} onAddForDate={openNew} onShare={setShareTask} onOpen={openDetail} />
             ) : view === "month" ? (
-              <MonthView tasks={tasks} currentUserId={user.id} onSelectDate={openNew} onEdit={openEdit} onToggle={toggleStatus} onDelete={deleteTask} onShare={setShareTask} />
+              <MonthView tasks={tasks} currentUserId={user.id} onSelectDate={openNew} onEdit={openEdit} onToggle={toggleStatus} onDelete={deleteTask} onShare={setShareTask} onOpen={openDetail} />
             ) : (
               <SettingsView user={user} />
             )}
@@ -251,6 +259,20 @@ export function TodoApp({ user }: { user: User }) {
       />
 
       <ShareDialog task={shareTask} open={!!shareTask} onOpenChange={(o) => !o && setShareTask(null)} />
+
+      <TaskDetailSheet
+        task={detailTask}
+        currentUserId={user.id}
+        open={!!detailTask}
+        onOpenChange={(o) => !o && setDetailTaskId(null)}
+        onToggle={toggleStatus}
+        onEdit={(t) => {
+          setDetailTaskId(null);
+          openEdit(t);
+        }}
+        onDelete={deleteTask}
+        onShare={setShareTask}
+      />
     </div>
   );
 }
