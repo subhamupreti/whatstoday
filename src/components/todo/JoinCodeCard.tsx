@@ -10,9 +10,9 @@ export function JoinCodeCard() {
   const [joining, setJoining] = useState(false);
 
   const join = async () => {
-    const trimmed = code.trim().toUpperCase();
-    if (trimmed.length < 4) {
-      toast.error("Enter a valid code");
+    const trimmed = code.replace(/\D/g, "");
+    if (trimmed.length !== 6) {
+      toast.error("Enter the 6-digit code");
       return;
     }
     setJoining(true);
@@ -39,12 +39,14 @@ export function JoinCodeCard() {
       </div>
       <div className="flex gap-2">
         <Input
-          placeholder="ABCD2345"
+          placeholder="123456"
           value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
           onKeyDown={(e) => e.key === "Enter" && join()}
-          maxLength={12}
-          className="font-mono tracking-[0.3em] uppercase"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={6}
+          className="font-mono tracking-[0.4em] text-center text-lg"
         />
         <Button onClick={join} disabled={joining} className="btn-velocity text-primary-foreground shrink-0">
           Join
