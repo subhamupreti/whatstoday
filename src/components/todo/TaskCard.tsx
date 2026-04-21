@@ -152,7 +152,7 @@ export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onSh
               </button>
             )}
             <button
-              onClick={() => onDelete(task.id)}
+              onClick={requestDelete}
               aria-label="Delete"
               className="text-muted-foreground hover:text-destructive transition-colors p-1"
             >
@@ -161,6 +161,26 @@ export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onSh
           </div>
         </div>
       </motion.div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{task.title}" will be removed. You'll have a few seconds to undo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => onDelete(task.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
