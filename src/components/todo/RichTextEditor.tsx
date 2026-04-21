@@ -40,7 +40,14 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
       }),
       Link.configure({
         openOnClick: false,
-        HTMLAttributes: { class: "text-primary underline underline-offset-2" },
+        autolink: true,
+        protocols: ["http", "https", "mailto", "tel"],
+        validate: (href) => /^(https?:\/\/|mailto:|tel:)/i.test(href),
+        HTMLAttributes: {
+          class: "text-primary underline underline-offset-2",
+          rel: "noopener noreferrer nofollow",
+          target: "_blank",
+        },
       }),
       Placeholder.configure({
         placeholder: placeholder ?? "Add notes, paste images…",

@@ -22,10 +22,15 @@ export default function JoinTask() {
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const cleanCode = code.replace(/\D/g, "");
+  const cleanCode = code.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
 
   useEffect(() => {
     let cancelled = false;
+    if (authLoading) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     (async () => {
       setLoading(true);
       const { data, error } = await supabase.rpc("preview_task_share", { _code: cleanCode });
@@ -42,7 +47,7 @@ export default function JoinTask() {
     return () => {
       cancelled = true;
     };
-  }, [cleanCode]);
+  }, [cleanCode, user, authLoading]);
 
   const join = async () => {
     if (!user) {
