@@ -52,7 +52,7 @@ export type Database = {
           created_at: string
           id: string
           role: Database["public"]["Enums"]["share_role"]
-          share_code: string
+          share_code: string | null
           task_id: string
           user_id: string
         }
@@ -60,7 +60,7 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["share_role"]
-          share_code: string
+          share_code?: string | null
           task_id: string
           user_id: string
         }
@@ -68,7 +68,7 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["share_role"]
-          share_code?: string
+          share_code?: string | null
           task_id?: string
           user_id?: string
         }
@@ -154,6 +154,14 @@ export type Database = {
         Returns: boolean
       }
       join_task_by_code: { Args: { _code: string }; Returns: string }
+      preview_task_share: {
+        Args: { _code: string }
+        Returns: {
+          owner_name: string
+          task_id: string
+          title: string
+        }[]
+      }
     }
     Enums: {
       share_role: "viewer" | "completer"
