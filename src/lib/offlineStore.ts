@@ -48,7 +48,10 @@ export async function getOutbox(): Promise<OutboxOp[]> {
   return ops;
 }
 
-export async function enqueue(op: Omit<OutboxOp, "id">): Promise<OutboxOp> {
+type DistributiveOmit<T, K extends keyof T> = T extends T ? Omit<T, K> : never;
+export type NewOutboxOp = DistributiveOmit<OutboxOp, "id">;
+
+export async function enqueue(op: NewOutboxOp): Promise<OutboxOp> {
   const id = `${Date.now().toString(36).padStart(10, "0")}-${Math.random().toString(36).slice(2, 8)}`;
   const full = { ...op, id } as OutboxOp;
   await outboxStore.setItem(id, full);
