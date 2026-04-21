@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Task, NewTask } from "@/types/task";
@@ -16,6 +17,7 @@ import { useOverdueAlerts } from "@/hooks/useOverdueAlerts";
 import { Plus } from "lucide-react";
 
 export function TodoApp({ user }: { user: User }) {
+  const navigate = useNavigate();
   const [view, setView] = useState<ViewKey>("today");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -192,7 +194,7 @@ export function TodoApp({ user }: { user: User }) {
     setSheetOpen(true);
   };
 
-  const openDetail = (task: Task) => setDetailTaskId(task.id);
+  const openDetail = (task: Task) => navigate(`/task/${task.id}`);
   const detailTask = useMemo(
     () => (detailTaskId ? tasks.find((t) => t.id === detailTaskId) ?? null : null),
     [detailTaskId, tasks],
