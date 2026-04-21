@@ -194,7 +194,7 @@ export function TodoApp({ user }: { user: User }) {
     setSheetOpen(true);
   };
 
-  const openDetail = (task: Task) => setDetailTaskId(task.id);
+  const openDetail = (task: Task) => navigate(`/task/${task.id}`);
   const detailTask = useMemo(
     () => (detailTaskId ? tasks.find((t) => t.id === detailTaskId) ?? null : null),
     [detailTaskId, tasks],
