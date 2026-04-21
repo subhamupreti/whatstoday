@@ -49,7 +49,7 @@ export function TodoApp({ user }: { user: User }) {
     };
   }, [user.id, fetchTasks]);
 
-  const upsertTask = async (payload: NewTask, id?: string) => {
+  const upsertTask = async (payload: NewTask, id?: string): Promise<void> => {
     if (id) {
       const { error } = await supabase
         .from("tasks")
@@ -61,7 +61,10 @@ export function TodoApp({ user }: { user: User }) {
           due_date: payload.due_date ?? null,
         })
         .eq("id", id);
-      if (error) return toast.error(error.message);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
       toast.success("Task updated");
     } else {
       const { error } = await supabase.from("tasks").insert({
@@ -72,7 +75,10 @@ export function TodoApp({ user }: { user: User }) {
         tags: payload.tags ?? [],
         due_date: payload.due_date ?? null,
       });
-      if (error) return toast.error(error.message);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
       toast.success("Task added");
     }
     setSheetOpen(false);
