@@ -122,15 +122,42 @@ export function TodoApp({ user }: { user: User }) {
     }
   };
 
-  const deleteTask = async (id: string) => {
+  const deleteTask = (id: string) => {
+    const target = tasks.find((t) => t.id === id);
+    if (!target) return;
+
+    // Optimistic remove
     setTasks((t) => t.filter((x) => x.id !== id));
-    const { error } = await supabase.from("tasks").delete().eq("id", id);
-    if (error) {
-      toast.error(error.message);
-      fetchTasks();
-    } else {
-      toast.success("Task deleted");
-    }
+
+    let undone = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const performDelete = async () => {
+      if (undone) return;
+      const { error } = await supabase.from("tasks").delete().eq("id", id);
+      if (error) {
+        toast.error(error.message);
+        fetchTasks();
+      }
+    };
+
+    const toastId = toast("Task deleted", {
+      description: target.title,
+      duration: 5000,
+      action: {
+        label: "Undo",
+        onClick: () => {
+          undone = true;
+          if (timer) clearTimeout(timer);
+          // Restore in UI; DB row was never removed.
+          setTasks((t) => (t.some((x) => x.id === id) ? t : [...t, target]));
+          toast.dismiss(toastId);
+          toast.success("Restored");
+        },
+      },
+    });
+
+    timer = setTimeout(performDelete, 5000);
   };
 
   const openNew = (date?: Date) => {
