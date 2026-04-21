@@ -47,7 +47,7 @@ export default function JoinTask() {
     return () => {
       cancelled = true;
     };
-  }, [cleanCode]);
+  }, [cleanCode, user, authLoading]);
 
   const join = async () => {
     if (!user) {
