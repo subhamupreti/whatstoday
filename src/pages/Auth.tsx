@@ -15,15 +15,17 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const redirect = new URLSearchParams(window.location.search).get("redirect") || "/";
+
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      if (s) navigate("/", { replace: true });
+      if (s) navigate(redirect, { replace: true });
     });
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate("/", { replace: true });
+      if (data.session) navigate(redirect, { replace: true });
     });
     return () => sub.subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, redirect]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
