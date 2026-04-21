@@ -410,7 +410,7 @@ export function TodoApp({ user }: { user: User }) {
             ) : view === "month" ? (
               <MonthView tasks={tasks} currentUserId={user.id} onSelectDate={openNew} onEdit={openEdit} onToggle={toggleStatus} onDelete={deleteTask} onShare={setShareTask} onOpen={openDetail} />
             ) : (
-              <SettingsView user={user} />
+              <SettingsView user={user} onSyncNow={flushOutbox} />
             )}
           </motion.div>
         </AnimatePresence>
