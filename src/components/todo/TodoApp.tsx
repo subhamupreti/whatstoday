@@ -12,9 +12,11 @@ import { SettingsView } from "./SettingsView";
 import { BottomNav, type ViewKey } from "./BottomNav";
 import { TaskSheet } from "./TaskSheet";
 import { ShareDialog } from "./ShareDialog";
+import { BulkShareDialog } from "./BulkShareDialog";
+import { SelectionToolbar } from "./SelectionToolbar";
 import { TaskDetailSheet } from "./TaskDetailSheet";
 import { useOverdueAlerts } from "@/hooks/useOverdueAlerts";
-import { Plus, WifiOff, RefreshCw } from "lucide-react";
+import { Plus, WifiOff, RefreshCw, CheckSquare } from "lucide-react";
 import {
   enqueue,
   getOutbox,
@@ -39,8 +41,41 @@ export function TodoApp({ user }: { user: User }) {
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
   const [online, setOnline] = useState(isOnline());
   const [pendingCount, setPendingCount] = useState(0);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   useOverdueAlerts(tasks);
+
+  const enterSelect = useCallback((seedTask?: Task) => {
+    setSelectMode(true);
+    if (seedTask && seedTask.user_id === user.id) {
+      setSelectedIds(new Set([seedTask.id]));
+    }
+  }, [user.id]);
+
+  const exitSelect = useCallback(() => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }, []);
+
+  const toggleSelect = useCallback(
+    (t: Task) => {
+      if (t.user_id !== user.id) return;
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(t.id)) next.delete(t.id);
+        else next.add(t.id);
+        return next;
+      });
+    },
+    [user.id],
+  );
+
+  const selectedTasks = useMemo(
+    () => tasks.filter((t) => selectedIds.has(t.id) && t.user_id === user.id),
+    [tasks, selectedIds, user.id],
+  );
 
   const refreshPending = useCallback(async () => {
     setPendingCount(await outboxSize());
@@ -398,9 +433,20 @@ export function TodoApp({ user }: { user: User }) {
             <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2">
               {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
             </p>
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-3">
-              {view === "today" ? "WHAT'S TODAY?" : heading}
-            </h1>
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
+                {view === "today" ? "WHAT'S TODAY?" : heading}
+              </h1>
+              {view !== "settings" && !selectMode && (
+                <button
+                  onClick={() => enterSelect()}
+                  className="shrink-0 mt-2 inline-flex items-center gap-1.5 rounded-full glass-bezel px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Select tasks"
+                >
+                  <CheckSquare size={13} /> Select
+                </button>
+              )}
+            </div>
             {(!online || pendingCount > 0) && (
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider">
                 {!online ? (
@@ -426,11 +472,11 @@ export function TodoApp({ user }: { user: User }) {
             {loading ? (
               <SkeletonList />
             ) : view === "today" ? (
-              <TodayView tasks={tasks} currentUserId={user.id} onToggle={toggleStatus} onEdit={openEdit} onDelete={deleteTask} onAdd={() => openNew()} onShare={setShareTask} onOpen={openDetail} />
+              <TodayView tasks={tasks} currentUserId={user.id} onToggle={toggleStatus} onEdit={openEdit} onDelete={deleteTask} onAdd={() => openNew()} onShare={setShareTask} onOpen={openDetail} selectable={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect} onLongPress={enterSelect} />
             ) : view === "week" ? (
-              <WeekView tasks={tasks} currentUserId={user.id} onToggle={toggleStatus} onEdit={openEdit} onDelete={deleteTask} onAddForDate={openNew} onShare={setShareTask} onOpen={openDetail} />
+              <WeekView tasks={tasks} currentUserId={user.id} onToggle={toggleStatus} onEdit={openEdit} onDelete={deleteTask} onAddForDate={openNew} onShare={setShareTask} onOpen={openDetail} selectable={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect} onLongPress={enterSelect} />
             ) : view === "month" ? (
-              <MonthView tasks={tasks} currentUserId={user.id} onSelectDate={openNew} onEdit={openEdit} onToggle={toggleStatus} onDelete={deleteTask} onShare={setShareTask} onOpen={openDetail} />
+              <MonthView tasks={tasks} currentUserId={user.id} onSelectDate={openNew} onEdit={openEdit} onToggle={toggleStatus} onDelete={deleteTask} onShare={setShareTask} onOpen={openDetail} selectable={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect} onLongPress={enterSelect} />
             ) : (
               <SettingsView user={user} onSyncNow={flushOutbox} />
             )}
@@ -466,6 +512,22 @@ export function TodoApp({ user }: { user: User }) {
       />
 
       <ShareDialog task={shareTask} open={!!shareTask} onOpenChange={(o) => !o && setShareTask(null)} />
+
+      <BulkShareDialog
+        tasks={selectedTasks}
+        open={bulkOpen}
+        onOpenChange={(o) => {
+          setBulkOpen(o);
+          if (!o) exitSelect();
+        }}
+      />
+
+      <SelectionToolbar
+        count={selectedIds.size}
+        ownedCount={selectedTasks.length}
+        onCancel={exitSelect}
+        onShare={() => setBulkOpen(true)}
+      />
 
       <TaskDetailSheet
         task={detailTask}

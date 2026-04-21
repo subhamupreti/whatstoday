@@ -47,6 +47,60 @@ export type Database = {
         }
         Relationships: []
       }
+      task_share_bundle_items: {
+        Row: {
+          bundle_id: string
+          task_id: string
+        }
+        Insert: {
+          bundle_id: string
+          task_id: string
+        }
+        Update: {
+          bundle_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_share_bundle_items_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "task_share_bundles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_share_bundle_items_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_share_bundles: {
+        Row: {
+          created_at: string
+          id: string
+          owner_user_id: string
+          role: Database["public"]["Enums"]["share_role"]
+          share_code: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_user_id: string
+          role?: Database["public"]["Enums"]["share_role"]
+          share_code: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_user_id?: string
+          role?: Database["public"]["Enums"]["share_role"]
+          share_code?: string
+        }
+        Relationships: []
+      }
       task_shares: {
         Row: {
           created_at: string
@@ -132,6 +186,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_task_bundle_share: {
+        Args: {
+          _role?: Database["public"]["Enums"]["share_role"]
+          _task_ids: string[]
+        }
+        Returns: string
+      }
       create_task_share: {
         Args: {
           _role?: Database["public"]["Enums"]["share_role"]
@@ -156,7 +217,17 @@ export type Database = {
         Args: { _task_id: string; _user_id: string }
         Returns: boolean
       }
+      join_task_bundle_by_code: { Args: { _code: string }; Returns: number }
       join_task_by_code: { Args: { _code: string }; Returns: string }
+      preview_task_bundle_share: {
+        Args: { _code: string }
+        Returns: {
+          bundle_id: string
+          owner_name: string
+          sample_titles: string[]
+          task_count: number
+        }[]
+      }
       preview_task_share: {
         Args: { _code: string }
         Returns: {

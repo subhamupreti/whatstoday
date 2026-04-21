@@ -15,6 +15,7 @@ import {
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TaskCard } from "./TaskCard";
 import { cn } from "@/lib/utils";
+import type { SelectionProps } from "./selection";
 
 export function MonthView({
   tasks,
@@ -25,6 +26,10 @@ export function MonthView({
   onDelete,
   onShare,
   onOpen,
+  selectable,
+  selectedIds,
+  onToggleSelect,
+  onLongPress,
 }: {
   tasks: Task[];
   currentUserId: string;
@@ -34,7 +39,7 @@ export function MonthView({
   onDelete: (id: string) => void;
   onShare: (t: Task) => void;
   onOpen: (t: Task) => void;
-}) {
+} & SelectionProps) {
   const [cursor, setCursor] = useState(new Date());
   const [selected, setSelected] = useState<Date>(new Date());
 
@@ -140,7 +145,19 @@ export function MonthView({
           <ul className="space-y-3">
             {dayTasks.map((t) => (
               <li key={t.id}>
-                <TaskCard task={t} currentUserId={currentUserId} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onShare={onShare} onOpen={onOpen} />
+                <TaskCard
+                  task={t}
+                  currentUserId={currentUserId}
+                  onToggle={onToggle}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onShare={onShare}
+                  onOpen={onOpen}
+                  selectable={selectable}
+                  selected={selectedIds?.has(t.id)}
+                  onToggleSelect={onToggleSelect}
+                  onLongPress={onLongPress}
+                />
               </li>
             ))}
           </ul>
