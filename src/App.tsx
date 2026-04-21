@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import JoinTask from "./pages/JoinTask";
+import TaskPage from "./pages/TaskPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => {
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/join/:code" element={<JoinTask />} />
+            <Route path="/task/:id" element={<TaskPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
