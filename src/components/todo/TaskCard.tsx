@@ -1,8 +1,18 @@
 import type { Task } from "@/types/task";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { Trash2, Pencil, Share2, Users } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const priorityStyles: Record<Task["priority"], { label: string; cls: string; bar: string }> = {
   high: { label: "High", cls: "bg-primary/15 text-primary border border-primary/25", bar: "bg-primary" },
@@ -30,10 +40,14 @@ export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onSh
     ? new Date(task.due_date).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
     : null;
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const requestDelete = () => setConfirmOpen(true);
+
   const onDragEnd = (_: unknown, info: { offset: { x: number } }) => {
     if (info.offset.x < -120) {
-      animate(x, -400, { duration: 0.18 });
-      setTimeout(() => onDelete(task.id), 160);
+      animate(x, 0, { type: "spring", stiffness: 400, damping: 32 });
+      requestDelete();
     } else {
       animate(x, 0, { type: "spring", stiffness: 400, damping: 32 });
     }
@@ -138,7 +152,7 @@ export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onSh
               </button>
             )}
             <button
-              onClick={() => onDelete(task.id)}
+              onClick={requestDelete}
               aria-label="Delete"
               className="text-muted-foreground hover:text-destructive transition-colors p-1"
             >
@@ -147,6 +161,26 @@ export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onSh
           </div>
         </div>
       </motion.div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{task.title}" will be removed. You'll have a few seconds to undo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => onDelete(task.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
