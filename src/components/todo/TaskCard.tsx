@@ -1,6 +1,6 @@
 import type { Task } from "@/types/task";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { Trash2, Pencil, Share2, Users } from "lucide-react";
+import { Trash2, Pencil, Share2, Users, Check } from "lucide-react";
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -28,9 +28,25 @@ interface Props {
   onDelete: (id: string) => void;
   onShare?: (t: Task) => void;
   onOpen?: (t: Task) => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (t: Task) => void;
+  onLongPress?: (t: Task) => void;
 }
 
-export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onShare, onOpen }: Props) {
+export function TaskCard({
+  task,
+  currentUserId,
+  onToggle,
+  onEdit,
+  onDelete,
+  onShare,
+  onOpen,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
+  onLongPress,
+}: Props) {
   const isOwner = task.user_id === currentUserId;
   const x = useMotionValue(0);
   const ref = useRef<HTMLDivElement>(null);
@@ -42,10 +58,16 @@ export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onSh
     : null;
 
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFired = useRef(false);
 
   const requestDelete = () => setConfirmOpen(true);
 
   const onDragEnd = (_: unknown, info: { offset: { x: number } }) => {
+    if (selectable) {
+      animate(x, 0, { type: "spring", stiffness: 400, damping: 32 });
+      return;
+    }
     if (info.offset.x < -120) {
       animate(x, 0, { type: "spring", stiffness: 400, damping: 32 });
       requestDelete();
@@ -54,52 +76,102 @@ export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onSh
     }
   };
 
+  const startLongPress = () => {
+    if (selectable || !isOwner || !onLongPress) return;
+    longPressFired.current = false;
+    longPressTimer.current = setTimeout(() => {
+      longPressFired.current = true;
+      onLongPress(task);
+    }, 450);
+  };
+  const cancelLongPress = () => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    longPressTimer.current = null;
+  };
+
   const ps = priorityStyles[task.priority];
+
+  const handleCardClick = () => {
+    if (longPressFired.current) {
+      longPressFired.current = false;
+      return;
+    }
+    if (selectable) {
+      onToggleSelect?.(task);
+      return;
+    }
+    if (onOpen) onOpen(task);
+    else if (isOwner) onEdit(task);
+  };
 
   return (
     <div className="relative">
-      <motion.div
-        style={{ opacity: bgOpacity }}
-        className="absolute inset-0 rounded-2xl bg-destructive flex items-center justify-end pr-6"
-      >
-        <Trash2 className="text-destructive-foreground" size={20} />
-      </motion.div>
+      {!selectable && (
+        <motion.div
+          style={{ opacity: bgOpacity }}
+          className="absolute inset-0 rounded-2xl bg-destructive flex items-center justify-end pr-6"
+        >
+          <Trash2 className="text-destructive-foreground" size={20} />
+        </motion.div>
+      )}
 
       <motion.div
         ref={ref}
-        drag="x"
+        drag={selectable ? false : "x"}
         dragConstraints={{ left: -200, right: 0 }}
         dragElastic={0.15}
         style={{ x }}
         onDragEnd={onDragEnd}
         className={cn(
-          "relative card-gradient rounded-2xl p-4 sm:p-5 shadow-soft touch-pan-y select-none",
+          "relative card-gradient rounded-2xl p-4 sm:p-5 shadow-soft touch-pan-y select-none transition-all",
           completed && "opacity-50",
+          selectable && selected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
         )}
       >
         <div className="flex items-start gap-4">
           <div className={cn("w-1 self-stretch rounded-full", ps.bar)} aria-hidden />
 
-          <button
-            onClick={() => onToggle(task)}
-            aria-label={completed ? "Mark incomplete" : "Mark complete"}
-            className={cn(
-              "size-7 rounded-lg border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all",
-              completed
-                ? "bg-gradient-velocity border-transparent shadow-glow"
-                : "border-border hover:border-primary",
-            )}
-          >
-            {completed && (
-              <svg viewBox="0 0 24 24" className="size-4 text-primary-foreground" fill="none" strokeWidth="3.5" stroke="currentColor">
-                <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
-          </button>
+          {selectable ? (
+            <button
+              onClick={() => onToggleSelect?.(task)}
+              aria-label={selected ? "Deselect task" : "Select task"}
+              disabled={!isOwner}
+              className={cn(
+                "size-7 rounded-lg border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all",
+                !isOwner && "opacity-30 cursor-not-allowed",
+                selected
+                  ? "bg-gradient-velocity border-transparent shadow-glow"
+                  : "border-border hover:border-primary",
+              )}
+            >
+              {selected && <Check size={16} className="text-primary-foreground" strokeWidth={3} />}
+            </button>
+          ) : (
+            <button
+              onClick={() => onToggle(task)}
+              aria-label={completed ? "Mark incomplete" : "Mark complete"}
+              className={cn(
+                "size-7 rounded-lg border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all",
+                completed
+                  ? "bg-gradient-velocity border-transparent shadow-glow"
+                  : "border-border hover:border-primary",
+              )}
+            >
+              {completed && (
+                <svg viewBox="0 0 24 24" className="size-4 text-primary-foreground" fill="none" strokeWidth="3.5" stroke="currentColor">
+                  <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+          )}
 
           <button
             type="button"
-            onClick={() => (onOpen ? onOpen(task) : isOwner && onEdit(task))}
+            onClick={handleCardClick}
+            onPointerDown={startLongPress}
+            onPointerUp={cancelLongPress}
+            onPointerLeave={cancelLongPress}
+            onPointerCancel={cancelLongPress}
             className="flex-1 text-left min-w-0"
           >
             <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -135,33 +207,35 @@ export function TaskCard({ task, currentUserId, onToggle, onEdit, onDelete, onSh
             )}
           </button>
 
-          <div className="flex items-center gap-1">
-            {isOwner && onShare && (
+          {!selectable && (
+            <div className="flex items-center gap-1">
+              {isOwner && onShare && (
+                <button
+                  onClick={() => onShare(task)}
+                  aria-label="Share"
+                  className="text-muted-foreground hover:text-primary transition-colors p-1"
+                >
+                  <Share2 size={16} />
+                </button>
+              )}
+              {isOwner && (
+                <button
+                  onClick={() => onEdit(task)}
+                  aria-label="Edit"
+                  className="text-muted-foreground hover:text-foreground transition-colors p-1 hidden sm:block"
+                >
+                  <Pencil size={16} />
+                </button>
+              )}
               <button
-                onClick={() => onShare(task)}
-                aria-label="Share"
-                className="text-muted-foreground hover:text-primary transition-colors p-1"
+                onClick={requestDelete}
+                aria-label="Delete"
+                className="text-muted-foreground hover:text-destructive transition-colors p-1"
               >
-                <Share2 size={16} />
+                <Trash2 size={16} />
               </button>
-            )}
-            {isOwner && (
-              <button
-                onClick={() => onEdit(task)}
-                aria-label="Edit"
-                className="text-muted-foreground hover:text-foreground transition-colors p-1 hidden sm:block"
-              >
-                <Pencil size={16} />
-              </button>
-            )}
-            <button
-              onClick={requestDelete}
-              aria-label="Delete"
-              className="text-muted-foreground hover:text-destructive transition-colors p-1"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
+            </div>
+          )}
         </div>
       </motion.div>
 
