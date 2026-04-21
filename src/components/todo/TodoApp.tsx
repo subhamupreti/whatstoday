@@ -349,6 +349,27 @@ export function TodoApp({ user }: { user: User }) {
     [detailTaskId, tasks],
   );
 
+  // Honour ?edit=ID (from the dedicated /task/:id page) and ?settings=1.
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (editId) {
+      const t = tasks.find((x) => x.id === editId);
+      if (t) {
+        openEdit(t);
+        const next = new URLSearchParams(searchParams);
+        next.delete("edit");
+        setSearchParams(next, { replace: true });
+      }
+    }
+    if (searchParams.get("settings") === "1") {
+      setView("settings");
+      const next = new URLSearchParams(searchParams);
+      next.delete("settings");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, tasks]);
+
   const heading = useMemo(() => {
     return { today: "Today", week: "This Week", month: "This Month", settings: "Settings" }[view];
   }, [view]);
