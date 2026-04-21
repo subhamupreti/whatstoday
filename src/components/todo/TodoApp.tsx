@@ -12,9 +12,11 @@ import { SettingsView } from "./SettingsView";
 import { BottomNav, type ViewKey } from "./BottomNav";
 import { TaskSheet } from "./TaskSheet";
 import { ShareDialog } from "./ShareDialog";
+import { BulkShareDialog } from "./BulkShareDialog";
+import { SelectionToolbar } from "./SelectionToolbar";
 import { TaskDetailSheet } from "./TaskDetailSheet";
 import { useOverdueAlerts } from "@/hooks/useOverdueAlerts";
-import { Plus, WifiOff, RefreshCw } from "lucide-react";
+import { Plus, WifiOff, RefreshCw, CheckSquare } from "lucide-react";
 import {
   enqueue,
   getOutbox,
@@ -39,8 +41,41 @@ export function TodoApp({ user }: { user: User }) {
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
   const [online, setOnline] = useState(isOnline());
   const [pendingCount, setPendingCount] = useState(0);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   useOverdueAlerts(tasks);
+
+  const enterSelect = useCallback((seedTask?: Task) => {
+    setSelectMode(true);
+    if (seedTask && seedTask.user_id === user.id) {
+      setSelectedIds(new Set([seedTask.id]));
+    }
+  }, [user.id]);
+
+  const exitSelect = useCallback(() => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }, []);
+
+  const toggleSelect = useCallback(
+    (t: Task) => {
+      if (t.user_id !== user.id) return;
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(t.id)) next.delete(t.id);
+        else next.add(t.id);
+        return next;
+      });
+    },
+    [user.id],
+  );
+
+  const selectedTasks = useMemo(
+    () => tasks.filter((t) => selectedIds.has(t.id) && t.user_id === user.id),
+    [tasks, selectedIds, user.id],
+  );
 
   const refreshPending = useCallback(async () => {
     setPendingCount(await outboxSize());
