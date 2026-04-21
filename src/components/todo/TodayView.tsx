@@ -9,16 +9,20 @@ const priorityRank = { high: 0, medium: 1, low: 2 } as const;
 
 export function TodayView({
   tasks,
+  currentUserId,
   onToggle,
   onEdit,
   onDelete,
   onAdd,
+  onShare,
 }: {
   tasks: Task[];
+  currentUserId: string;
   onToggle: (t: Task) => void;
   onEdit: (t: Task) => void;
   onDelete: (id: string) => void;
   onAdd: () => void;
+  onShare: (t: Task) => void;
 }) {
   const today = new Date();
   const todays = useMemo(() => {
@@ -72,7 +76,7 @@ export function TodayView({
         <ul className="space-y-3">
           {todays.map((t) => (
             <li key={t.id}>
-              <TaskCard task={t} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} />
+              <TaskCard task={t} currentUserId={currentUserId} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onShare={onShare} />
             </li>
           ))}
         </ul>
@@ -86,7 +90,7 @@ export function TodayView({
           <ul className="space-y-3">
             {undated.map((t) => (
               <li key={t.id}>
-                <TaskCard task={t} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} />
+                <TaskCard task={t} currentUserId={currentUserId} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} onShare={onShare} />
               </li>
             ))}
           </ul>

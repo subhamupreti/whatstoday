@@ -10,6 +10,7 @@ import { MonthView } from "./MonthView";
 import { SettingsView } from "./SettingsView";
 import { BottomNav, type ViewKey } from "./BottomNav";
 import { TaskSheet } from "./TaskSheet";
+import { ShareDialog } from "./ShareDialog";
 import { Plus } from "lucide-react";
 
 export function TodoApp({ user }: { user: User }) {
@@ -19,6 +20,7 @@ export function TodoApp({ user }: { user: User }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [defaultDate, setDefaultDate] = useState<Date | null>(null);
+  const [shareTask, setShareTask] = useState<Task | null>(null);
 
   const fetchTasks = useCallback(async () => {
     const { data, error } = await supabase
@@ -36,16 +38,27 @@ export function TodoApp({ user }: { user: User }) {
 
   useEffect(() => {
     fetchTasks();
-    const channel = supabase
+    // Realtime: listen to ALL task changes (RLS filters server-side to owned + shared).
+    // We don't filter by user_id here so that shared tasks owned by others also stream in.
+    const tasksCh = supabase
       .channel("tasks-realtime")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "tasks", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "tasks" },
+        () => fetchTasks(),
+      )
+      .subscribe();
+    const sharesCh = supabase
+      .channel("task-shares-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "task_shares" },
         () => fetchTasks(),
       )
       .subscribe();
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(tasksCh);
+      supabase.removeChannel(sharesCh);
     };
   }, [user.id, fetchTasks]);
 
@@ -166,11 +179,11 @@ export function TodoApp({ user }: { user: User }) {
             {loading ? (
               <SkeletonList />
             ) : view === "today" ? (
-              <TodayView tasks={tasks} onToggle={toggleStatus} onEdit={openEdit} onDelete={deleteTask} onAdd={() => openNew()} />
+              <TodayView tasks={tasks} currentUserId={user.id} onToggle={toggleStatus} onEdit={openEdit} onDelete={deleteTask} onAdd={() => openNew()} onShare={setShareTask} />
             ) : view === "week" ? (
-              <WeekView tasks={tasks} onToggle={toggleStatus} onEdit={openEdit} onDelete={deleteTask} onAddForDate={openNew} />
+              <WeekView tasks={tasks} currentUserId={user.id} onToggle={toggleStatus} onEdit={openEdit} onDelete={deleteTask} onAddForDate={openNew} onShare={setShareTask} />
             ) : view === "month" ? (
-              <MonthView tasks={tasks} onSelectDate={openNew} onEdit={openEdit} onToggle={toggleStatus} onDelete={deleteTask} />
+              <MonthView tasks={tasks} currentUserId={user.id} onSelectDate={openNew} onEdit={openEdit} onToggle={toggleStatus} onDelete={deleteTask} onShare={setShareTask} />
             ) : (
               <SettingsView user={user} />
             )}
@@ -204,6 +217,8 @@ export function TodoApp({ user }: { user: User }) {
         defaultDate={defaultDate}
         onSubmit={upsertTask}
       />
+
+      <ShareDialog task={shareTask} open={!!shareTask} onOpenChange={(o) => !o && setShareTask(null)} />
     </div>
   );
 }
