@@ -44,9 +44,9 @@ export function TodoApp({ user }: { user: User }) {
   useEffect(() => {
     fetchTasks();
     // Realtime: listen to ALL task changes (RLS filters server-side to owned + shared).
-    // We don't filter by user_id here so that shared tasks owned by others also stream in.
+    // Unique channel names per user prevent collisions if multiple tabs share state.
     const tasksCh = supabase
-      .channel("tasks-realtime")
+      .channel(`tasks-realtime-${user.id}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "tasks" },
@@ -54,16 +54,28 @@ export function TodoApp({ user }: { user: User }) {
       )
       .subscribe();
     const sharesCh = supabase
-      .channel("task-shares-realtime")
+      .channel(`task-shares-realtime-${user.id}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "task_shares" },
         () => fetchTasks(),
       )
       .subscribe();
+
+    // Fallback refetch when tab regains focus / becomes visible — covers cases
+    // where the realtime socket dropped silently (mobile sleep, network blips).
+    const onFocus = () => fetchTasks();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") fetchTasks();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+
     return () => {
       supabase.removeChannel(tasksCh);
       supabase.removeChannel(sharesCh);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [user.id, fetchTasks]);
 
@@ -76,6 +88,7 @@ export function TodoApp({ user }: { user: User }) {
           description: payload.description ?? null,
           priority: payload.priority ?? "medium",
           tags: payload.tags ?? [],
+          music_links: payload.music_links ?? [],
           due_date: payload.due_date ?? null,
         })
         .eq("id", id);
@@ -91,6 +104,7 @@ export function TodoApp({ user }: { user: User }) {
         description: payload.description ?? null,
         priority: payload.priority ?? "medium",
         tags: payload.tags ?? [],
+        music_links: payload.music_links ?? [],
         due_date: payload.due_date ?? null,
       });
       if (error) {

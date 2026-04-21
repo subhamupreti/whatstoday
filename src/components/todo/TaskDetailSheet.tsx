@@ -1,6 +1,7 @@
 import type { Task } from "@/types/task";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { RichTextRenderer } from "./RichTextRenderer";
+import { MusicLinksList } from "./MusicLinks";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { Pencil, Share2, Trash2, Check, X, Users, Calendar, Flag } from "lucide-react";
@@ -138,6 +139,15 @@ export function TaskDetailSheet({
                 <p className="text-sm text-muted-foreground italic">No notes yet.</p>
               )}
             </div>
+
+            {task.music_links && task.music_links.length > 0 && (
+              <div className="mt-8 border-t border-border pt-6">
+                <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-bold mb-3">
+                  Music
+                </p>
+                <MusicLinksList links={task.music_links} />
+              </div>
+            )}
           </div>
         </div>
 

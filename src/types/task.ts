@@ -9,6 +9,7 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   tags: string[];
+  music_links: string[];
   due_date: string | null;
   completed_at: string | null;
   created_at: string;
@@ -20,5 +21,6 @@ export interface NewTask {
   description?: string | null;
   priority?: TaskPriority;
   tags?: string[];
+  music_links?: string[];
   due_date?: string | null;
 }

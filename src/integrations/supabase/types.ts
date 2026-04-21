@@ -89,6 +89,7 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          music_links: string[]
           priority: Database["public"]["Enums"]["task_priority"]
           status: Database["public"]["Enums"]["task_status"]
           tags: string[]
@@ -102,6 +103,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          music_links?: string[]
           priority?: Database["public"]["Enums"]["task_priority"]
           status?: Database["public"]["Enums"]["task_status"]
           tags?: string[]
@@ -115,6 +117,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          music_links?: string[]
           priority?: Database["public"]["Enums"]["task_priority"]
           status?: Database["public"]["Enums"]["task_status"]
           tags?: string[]
