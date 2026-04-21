@@ -5,8 +5,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Moon, Sun, Pencil } from "lucide-react";
 import { ProfileSheet, type Profile } from "./ProfileSheet";
+import { OfflineSyncPanel } from "./OfflineSyncPanel";
 
-export function SettingsView({ user }: { user: User }) {
+interface Props {
+  user: User;
+  onSyncNow?: () => Promise<void> | void;
+}
+
+export function SettingsView({ user, onSyncNow }: Props) {
   const [isDark, setIsDark] = useState(document.documentElement.classList.contains("dark"));
   const [profile, setProfile] = useState<Profile | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -81,6 +87,8 @@ export function SettingsView({ user }: { user: User }) {
           Switch to {isDark ? "Light" : "Dark"}
         </Button>
       </div>
+
+      <OfflineSyncPanel onSyncNow={async () => onSyncNow && (await onSyncNow())} />
 
       <Button
         variant="outline"
