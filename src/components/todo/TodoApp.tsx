@@ -383,8 +383,8 @@ export function TodoApp({ user }: { user: User }) {
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider">
                 {!online ? (
                   <>
-                    <WifiOff size={12} className="text-amber-400" />
-                    <span className="text-amber-400">Offline</span>
+                    <WifiOff size={12} className="text-muted-foreground" />
+                    <span className="text-muted-foreground">Offline</span>
                   </>
                 ) : (
                   <>
