@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Task, NewTask } from "@/types/task";
@@ -16,6 +17,7 @@ import { useOverdueAlerts } from "@/hooks/useOverdueAlerts";
 import { Plus } from "lucide-react";
 
 export function TodoApp({ user }: { user: User }) {
+  const navigate = useNavigate();
   const [view, setView] = useState<ViewKey>("today");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
