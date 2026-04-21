@@ -14,7 +14,17 @@ import { TaskSheet } from "./TaskSheet";
 import { ShareDialog } from "./ShareDialog";
 import { TaskDetailSheet } from "./TaskDetailSheet";
 import { useOverdueAlerts } from "@/hooks/useOverdueAlerts";
-import { Plus } from "lucide-react";
+import { Plus, WifiOff, RefreshCw } from "lucide-react";
+import {
+  enqueue,
+  getOutbox,
+  isOnline,
+  loadCachedTasks,
+  outboxSize,
+  removeFromOutbox,
+  saveCachedTasks,
+  type OutboxOp,
+} from "@/lib/offlineStore";
 
 export function TodoApp({ user }: { user: User }) {
   const navigate = useNavigate();
@@ -26,19 +36,36 @@ export function TodoApp({ user }: { user: User }) {
   const [defaultDate, setDefaultDate] = useState<Date | null>(null);
   const [shareTask, setShareTask] = useState<Task | null>(null);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+  const [online, setOnline] = useState(isOnline());
+  const [pendingCount, setPendingCount] = useState(0);
 
   useOverdueAlerts(tasks);
 
+  const refreshPending = useCallback(async () => {
+    setPendingCount(await outboxSize());
+  }, []);
+
   const fetchTasks = useCallback(async () => {
+    if (!isOnline()) {
+      const cached = await loadCachedTasks();
+      if (cached) setTasks(cached);
+      setLoading(false);
+      return;
+    }
     const { data, error } = await supabase
       .from("tasks")
       .select("*")
       .order("due_date", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false });
     if (error) {
-      toast.error(error.message);
+      // Network/permission failure — fall back to cache silently.
+      const cached = await loadCachedTasks();
+      if (cached) setTasks(cached);
+      else toast.error(error.message);
     } else {
-      setTasks((data ?? []) as Task[]);
+      const list = (data ?? []) as Task[];
+      setTasks(list);
+      saveCachedTasks(list);
     }
     setLoading(false);
   }, []);
