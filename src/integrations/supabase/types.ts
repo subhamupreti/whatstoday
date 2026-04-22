@@ -183,7 +183,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          designation: string | null
+          display_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          designation?: string | null
+          display_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          designation?: string | null
+          display_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_task_bundle_share: {
@@ -201,6 +221,16 @@ export type Database = {
         Returns: string
       }
       generate_share_code: { Args: never; Returns: string }
+      get_my_profile: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          designation: string
+          display_name: string
+          phone: string
+          user_id: string
+        }[]
+      }
       has_share_role: {
         Args: {
           _role: Database["public"]["Enums"]["share_role"]
