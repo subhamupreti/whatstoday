@@ -1,13 +1,14 @@
-import { Calendar, CalendarDays, ListTodo, Settings as SettingsIcon } from "lucide-react";
+import { Calendar, CalendarDays, ListTodo, Settings as SettingsIcon, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-export type ViewKey = "today" | "week" | "month" | "settings";
+export type ViewKey = "today" | "week" | "month" | "assignments" | "settings";
 
 const items: { key: ViewKey; label: string; Icon: typeof Calendar }[] = [
   { key: "today", label: "Today", Icon: ListTodo },
   { key: "week", label: "Week", Icon: CalendarDays },
   { key: "month", label: "Month", Icon: Calendar },
+  { key: "assignments", label: "Study", Icon: BookOpen },
   { key: "settings", label: "Settings", Icon: SettingsIcon },
 ];
 
