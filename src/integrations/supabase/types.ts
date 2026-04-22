@@ -201,6 +201,25 @@ export type Database = {
         Returns: string
       }
       generate_share_code: { Args: never; Returns: string }
+      get_my_profile: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          designation: string
+          display_name: string
+          phone: string
+          user_id: string
+        }[]
+      }
+      get_public_profile: {
+        Args: { _user_id: string }
+        Returns: {
+          avatar_url: string
+          designation: string
+          display_name: string
+          user_id: string
+        }[]
+      }
       has_share_role: {
         Args: {
           _role: Database["public"]["Enums"]["share_role"]

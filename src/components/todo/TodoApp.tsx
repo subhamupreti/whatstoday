@@ -116,7 +116,6 @@ export function TodoApp({ user }: { user: User }) {
           description: op.payload.description ?? null,
           priority: op.payload.priority ?? "medium",
           tags: op.payload.tags ?? [],
-          music_links: op.payload.music_links ?? [],
           due_date: op.payload.due_date ?? null,
         });
         return !error;
@@ -227,7 +226,6 @@ export function TodoApp({ user }: { user: User }) {
         description: payload.description ?? null,
         priority: payload.priority ?? "medium",
         tags: payload.tags ?? [],
-        music_links: payload.music_links ?? [],
         due_date: payload.due_date ?? null,
       };
       // Optimistic local update
@@ -257,7 +255,6 @@ export function TodoApp({ user }: { user: User }) {
         status: "pending",
         priority: payload.priority ?? "medium",
         tags: payload.tags ?? [],
-        music_links: payload.music_links ?? [],
         due_date: payload.due_date ?? null,
         completed_at: null,
         created_at: nowIso,
@@ -273,7 +270,6 @@ export function TodoApp({ user }: { user: User }) {
           description: payload.description ?? null,
           priority: payload.priority ?? "medium",
           tags: payload.tags ?? [],
-          music_links: payload.music_links ?? [],
           due_date: payload.due_date ?? null,
         });
         if (error) {
@@ -435,7 +431,7 @@ export function TodoApp({ user }: { user: User }) {
             </p>
             <div className="flex items-start justify-between gap-3 mb-3">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-                {view === "today" ? "WHAT'S TODAY?" : heading}
+                {view === "today" ? "What's Today?" : heading}
               </h1>
               {view !== "settings" && !selectMode && (
                 <button

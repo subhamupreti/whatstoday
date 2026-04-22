@@ -62,10 +62,10 @@ export function BulkShareDialog({ tasks, open, onOpenChange, onShared }: Props) 
 
   const nativeShare = async () => {
     if (!link || !code) return;
-    const text = `Join ${count} tasks on WHAT'S TODAY? Code: ${code}`;
+    const text = `Join ${count} tasks on What's Today? Code: ${code}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: "WHAT'S TODAY?", text, url: link });
+        await navigator.share({ title: "What's Today?", text, url: link });
       } else {
         await navigator.clipboard.writeText(`${text}\n${link}`);
         toast.success("Share message copied");
@@ -112,13 +112,14 @@ export function BulkShareDialog({ tasks, open, onOpenChange, onShared }: Props) 
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-bold">
-                  Bundle code
+                  6-digit bundle code
                 </label>
                 <div className="flex gap-2">
                   <Input
                     readOnly
                     value={code}
-                    className="font-mono text-xl tracking-[0.35em] text-center font-bold"
+                    inputMode="numeric"
+                    className="font-mono text-3xl tracking-[0.4em] text-center font-bold tabular-nums"
                   />
                   <Button onClick={copyCode} variant="outline" size="icon" aria-label="Copy code">
                     <Copy size={16} />

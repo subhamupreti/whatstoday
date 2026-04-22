@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { RichTextEditor } from "./RichTextEditor";
-import { MusicLinksEditor } from "./MusicLinks";
 
 const priorities: { value: TaskPriority; label: string }[] = [
   { value: "low", label: "Low" },
@@ -40,7 +39,6 @@ export function TaskSheet({
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [tags, setTags] = useState("");
   const [dueAt, setDueAt] = useState("");
-  const [musicLinks, setMusicLinks] = useState<string[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -50,13 +48,11 @@ export function TaskSheet({
       setPriority(task.priority);
       setTags(task.tags.join(", "));
       setDueAt(toLocalInputValue(task.due_date));
-      setMusicLinks(task.music_links ?? []);
     } else {
       setTitle("");
       setDescription("");
       setPriority("medium");
       setTags("");
-      setMusicLinks([]);
       const base = defaultDate ?? new Date();
       base.setHours(9, 0, 0, 0);
       setDueAt(toLocalInputValue(base.toISOString()));
@@ -75,7 +71,6 @@ export function TaskSheet({
         .map((t) => t.trim().replace(/^#/, ""))
         .filter(Boolean),
       due_date: dueAt ? new Date(dueAt).toISOString() : null,
-      music_links: musicLinks,
     };
     onSubmit(payload, task?.id);
   };
@@ -136,14 +131,6 @@ export function TaskSheet({
                 </button>
               ))}
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Music links</Label>
-            <MusicLinksEditor value={musicLinks} onChange={setMusicLinks} />
-            <p className="text-[10px] text-muted-foreground">
-              YouTube, Spotify, SoundCloud, Apple Music — playable inline.
-            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -20,12 +20,18 @@ export function SettingsView({ user, onSyncNow }: Props) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("display_name, phone, designation, avatar_url")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (!cancelled) setProfile((data as Profile | null) ?? { display_name: null, phone: null, designation: null, avatar_url: null });
+      // Use SECURITY DEFINER getter so phone is only readable by the owner.
+      const { data } = await supabase.rpc("get_my_profile");
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!cancelled)
+        setProfile(
+          (row as Profile | null) ?? {
+            display_name: null,
+            phone: null,
+            designation: null,
+            avatar_url: null,
+          },
+        );
     })();
     return () => {
       cancelled = true;

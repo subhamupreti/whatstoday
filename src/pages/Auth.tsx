@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -38,7 +38,7 @@ export default function Auth() {
           options: { emailRedirectTo: `${window.location.origin}/` },
         });
         if (error) throw error;
-        toast.success("Account created — you're in.");
+        toast.success("Account created — check your email to verify, then sign in.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -66,10 +66,12 @@ export default function Auth() {
         className="w-full max-w-sm"
       >
         <div className="flex flex-col items-center mb-10">
-          <div className="size-14 rounded-2xl bg-gradient-velocity shadow-glow flex items-center justify-center mb-5">
-            <Check className="text-primary-foreground" size={26} strokeWidth={3} />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight">WHAT'S TODAY?</h1>
+          <img
+            src={logo}
+            alt="What's Today? logo"
+            className="size-24 rounded-3xl mb-5 object-cover shadow-glow"
+          />
+          <h1 className="text-3xl font-bold tracking-tight">What's Today?</h1>
           <p className="text-muted-foreground text-sm mt-1 tracking-wide uppercase">
             {mode === "signin" ? "Sign in to continue" : "Create your account"}
           </p>
