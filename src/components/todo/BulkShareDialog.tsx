@@ -62,10 +62,10 @@ export function BulkShareDialog({ tasks, open, onOpenChange, onShared }: Props) 
 
   const nativeShare = async () => {
     if (!link || !code) return;
-    const text = `Join ${count} tasks on WHAT'S TODAY? Code: ${code}`;
+    const text = `Join ${count} tasks on What's Today? Code: ${code}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: "WHAT'S TODAY?", text, url: link });
+        await navigator.share({ title: "What's Today?", text, url: link });
       } else {
         await navigator.clipboard.writeText(`${text}\n${link}`);
         toast.success("Share message copied");

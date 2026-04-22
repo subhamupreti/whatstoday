@@ -48,10 +48,10 @@ export function ShareDialog({ task, open, onOpenChange }: Props) {
 
   const nativeShare = async () => {
     if (!link || !task) return;
-    const text = `Join my task "${task.title}" on WHAT'S TODAY? Code: ${code}`;
+    const text = `Join my task "${task.title}" on What's Today? Code: ${code}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: "WHAT'S TODAY?", text, url: link });
+        await navigator.share({ title: "What's Today?", text, url: link });
       } else {
         await navigator.clipboard.writeText(`${text}\n${link}`);
         toast.success("Share message copied");

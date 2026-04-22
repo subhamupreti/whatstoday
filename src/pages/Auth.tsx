@@ -38,7 +38,7 @@ export default function Auth() {
           options: { emailRedirectTo: `${window.location.origin}/` },
         });
         if (error) throw error;
-        toast.success("Account created — you're in.");
+        toast.success("Account created — check your email to verify, then sign in.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;

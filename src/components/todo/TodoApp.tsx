@@ -431,7 +431,7 @@ export function TodoApp({ user }: { user: User }) {
             </p>
             <div className="flex items-start justify-between gap-3 mb-3">
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-                {view === "today" ? "WHAT'S TODAY?" : heading}
+                {view === "today" ? "What's Today?" : heading}
               </h1>
               {view !== "settings" && !selectMode && (
                 <button
