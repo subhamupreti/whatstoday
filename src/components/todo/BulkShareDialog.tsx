@@ -112,13 +112,14 @@ export function BulkShareDialog({ tasks, open, onOpenChange, onShared }: Props) 
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-bold">
-                  Bundle code
+                  6-digit bundle code
                 </label>
                 <div className="flex gap-2">
                   <Input
                     readOnly
                     value={code}
-                    className="font-mono text-xl tracking-[0.35em] text-center font-bold"
+                    inputMode="numeric"
+                    className="font-mono text-3xl tracking-[0.4em] text-center font-bold tabular-nums"
                   />
                   <Button onClick={copyCode} variant="outline" size="icon" aria-label="Copy code">
                     <Copy size={16} />

@@ -93,7 +93,8 @@ export function ShareDialog({ task, open, onOpenChange }: Props) {
                   <Input
                     readOnly
                     value={code}
-                    className="font-mono text-2xl tracking-[0.5em] text-center font-bold"
+                    inputMode="numeric"
+                    className="font-mono text-3xl tracking-[0.4em] text-center font-bold tabular-nums"
                   />
                   <Button onClick={copyCode} variant="outline" size="icon" aria-label="Copy code">
                     <Copy size={16} />

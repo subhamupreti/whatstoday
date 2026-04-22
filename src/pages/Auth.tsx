@@ -66,10 +66,12 @@ export default function Auth() {
         className="w-full max-w-sm"
       >
         <div className="flex flex-col items-center mb-10">
-          <div className="size-14 rounded-2xl bg-gradient-velocity shadow-glow flex items-center justify-center mb-5">
-            <Check className="text-primary-foreground" size={26} strokeWidth={3} />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight">WHAT'S TODAY?</h1>
+          <img
+            src={logo}
+            alt="What's Today? logo"
+            className="size-24 rounded-3xl mb-5 object-cover shadow-glow"
+          />
+          <h1 className="text-3xl font-bold tracking-tight">What's Today?</h1>
           <p className="text-muted-foreground text-sm mt-1 tracking-wide uppercase">
             {mode === "signin" ? "Sign in to continue" : "Create your account"}
           </p>

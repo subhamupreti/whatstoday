@@ -81,9 +81,15 @@ export function ProfileSheet({ user, open, onOpenChange, profile, onSaved }: Pro
       designation: designation.trim() || null,
       avatar_url: avatarUrl,
     };
-    const { error } = await supabase
+    // Update if a row exists, otherwise insert. The handle_new_user trigger
+    // should already have created the row, so update is the common path.
+    const { error: updErr } = await supabase
       .from("profiles")
-      .upsert(payload, { onConflict: "user_id" });
+      .update(payload)
+      .eq("user_id", user.id);
+    const error = updErr
+      ? (await supabase.from("profiles").insert(payload)).error
+      : null;
     setSaving(false);
     if (error) {
       toast.error(error.message);
