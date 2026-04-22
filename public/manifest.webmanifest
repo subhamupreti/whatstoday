@@ -1,14 +1,17 @@
 {
-  "name": "WHAT'S TODAY?",
-  "short_name": "WHAT'S TODAY?",
-  "description": "A modern, premium todo app for the day, week, and month.",
+  "name": "What's Today?",
+  "short_name": "What's Today?",
+  "description": "What's Today? — a beautifully designed, mobile-first PWA to organize your day, week, and month with clarity.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#050506",
-  "theme_color": "#FF2D55",
+  "theme_color": "#207A8A",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
