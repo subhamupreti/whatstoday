@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 export default function Auth() {
   const navigate = useNavigate();

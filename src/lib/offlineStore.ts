@@ -17,7 +17,7 @@ const TASKS_KEY = "all";
 
 export type OutboxOp =
   | { id: string; kind: "create"; tempId: string; payload: NewTask & { user_id: string } }
-  | { id: string; kind: "update"; taskId: string; patch: Partial<Task> }
+  | { id: string; kind: "update"; taskId: string; patch: Partial<Omit<Task, "music_links">> }
   | { id: string; kind: "toggle"; taskId: string; nextStatus: "pending" | "completed"; completedAt: string | null }
   | { id: string; kind: "delete"; taskId: string };
 
