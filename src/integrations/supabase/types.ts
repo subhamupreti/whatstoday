@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      assignments: {
+        Row: {
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          progress: number
+          status: Database["public"]["Enums"]["assignment_status"]
+          subject: string
+          submitted_at: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          progress?: number
+          status?: Database["public"]["Enums"]["assignment_status"]
+          subject: string
+          submitted_at?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          progress?: number
+          status?: Database["public"]["Enums"]["assignment_status"]
+          subject?: string
+          submitted_at?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -257,6 +299,7 @@ export type Database = {
       }
     }
     Enums: {
+      assignment_status: "pending" | "completed" | "overdue"
       share_role: "viewer" | "completer"
       task_priority: "low" | "medium" | "high"
       task_status: "pending" | "completed"
@@ -387,6 +430,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      assignment_status: ["pending", "completed", "overdue"],
       share_role: ["viewer", "completer"],
       task_priority: ["low", "medium", "high"],
       task_status: ["pending", "completed"],
