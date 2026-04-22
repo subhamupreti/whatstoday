@@ -9,6 +9,7 @@ import { TodayView } from "./TodayView";
 import { WeekView } from "./WeekView";
 import { MonthView } from "./MonthView";
 import { SettingsView } from "./SettingsView";
+import { AssignmentsView } from "./AssignmentsView";
 import { BottomNav, type ViewKey } from "./BottomNav";
 import { TaskSheet } from "./TaskSheet";
 import { ShareDialog } from "./ShareDialog";
@@ -402,7 +403,7 @@ export function TodoApp({ user }: { user: User }) {
   }, [searchParams, tasks]);
 
   const heading = useMemo(() => {
-    return { today: "Today", week: "This Week", month: "This Month", settings: "Settings" }[view];
+    return { today: "Today", week: "This Week", month: "This Month", assignments: "Assignments", settings: "Settings" }[view];
   }, [view]);
 
   return (
@@ -433,7 +434,7 @@ export function TodoApp({ user }: { user: User }) {
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
                 {view === "today" ? "What's Today?" : heading}
               </h1>
-              {view !== "settings" && !selectMode && (
+              {view !== "settings" && view !== "assignments" && !selectMode && (
                 <button
                   onClick={() => enterSelect()}
                   className="shrink-0 mt-2 inline-flex items-center gap-1.5 rounded-full glass-bezel px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
@@ -473,6 +474,8 @@ export function TodoApp({ user }: { user: User }) {
               <WeekView tasks={tasks} currentUserId={user.id} onToggle={toggleStatus} onEdit={openEdit} onDelete={deleteTask} onAddForDate={openNew} onShare={setShareTask} onOpen={openDetail} selectable={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect} onLongPress={enterSelect} />
             ) : view === "month" ? (
               <MonthView tasks={tasks} currentUserId={user.id} onSelectDate={openNew} onEdit={openEdit} onToggle={toggleStatus} onDelete={deleteTask} onShare={setShareTask} onOpen={openDetail} selectable={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect} onLongPress={enterSelect} />
+            ) : view === "assignments" ? (
+              <AssignmentsView user={user} />
             ) : (
               <SettingsView user={user} onSyncNow={flushOutbox} />
             )}
@@ -481,7 +484,7 @@ export function TodoApp({ user }: { user: User }) {
       </main>
 
       {/* FAB */}
-      {view !== "settings" && (
+      {view !== "settings" && view !== "assignments" && (
         <button
           aria-label="Add task"
           onClick={() => openNew()}
