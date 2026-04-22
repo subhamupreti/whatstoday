@@ -5,7 +5,6 @@ import { useAuth } from "@/hooks/useAuth";
 import type { Task } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import { RichTextRenderer } from "@/components/todo/RichTextRenderer";
-import { MusicLinksList } from "@/components/todo/MusicLinks";
 import { format } from "date-fns";
 import { ArrowLeft, Calendar, Check, Flag, Loader2, Pencil, Trash2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -204,16 +203,6 @@ export default function TaskPage() {
             )}
           </div>
 
-          <div className="mt-8 border-t border-border pt-6">
-            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-bold mb-3">
-              Music
-            </p>
-            {task.music_links && task.music_links.length > 0 ? (
-              <MusicLinksList links={task.music_links} />
-            ) : (
-              <p className="text-sm text-muted-foreground italic">No music links added.</p>
-            )}
-          </div>
         </div>
       </section>
 

@@ -31,7 +31,9 @@ export default function JoinTask() {
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const cleanCode = code.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+  // Strip non-digits. Old alphanumeric codes still work via the SECURITY DEFINER RPC,
+  // but new codes are always 6 digits.
+  const cleanCode = code.replace(/[^0-9A-Za-z]/g, "").toUpperCase();
 
   useEffect(() => {
     let cancelled = false;
