@@ -4,6 +4,8 @@ export type TaskPriority = "low" | "medium" | "high";
 export interface Task {
   id: string;
   user_id: string;
+  workspace_id: string;
+  assigned_to_user_id: string | null;
   title: string;
   description: string | null;
   status: TaskStatus;
@@ -18,9 +20,11 @@ export interface Task {
 }
 
 export interface NewTask {
+  workspace_id: string;
   title: string;
   description?: string | null;
   priority?: TaskPriority;
   tags?: string[];
   due_date?: string | null;
+  assigned_to_user_id?: string | null;
 }

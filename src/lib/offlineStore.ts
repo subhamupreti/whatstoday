@@ -2,13 +2,13 @@ import localforage from "localforage";
 import type { Task, NewTask } from "@/types/task";
 
 const tasksStore = localforage.createInstance({
-  name: "whatstoday",
+  name: "todoflow",
   storeName: "tasks",
   description: "Cached task list for offline reads",
 });
 
 const outboxStore = localforage.createInstance({
-  name: "whatstoday",
+  name: "todoflow",
   storeName: "outbox",
   description: "Queued task mutations to replay when back online",
 });
@@ -17,7 +17,7 @@ const TASKS_KEY = "all";
 
 export type OutboxOp =
   | { id: string; kind: "create"; tempId: string; payload: NewTask & { user_id: string } }
-  | { id: string; kind: "update"; taskId: string; patch: Partial<Omit<Task, "music_links">> }
+  | { id: string; kind: "update"; taskId: string; patch: Partial<Task> }
   | { id: string; kind: "toggle"; taskId: string; nextStatus: "pending" | "completed"; completedAt: string | null }
   | { id: string; kind: "delete"; taskId: string };
 
@@ -33,9 +33,7 @@ export async function loadCachedTasks(): Promise<Task[] | null> {
 export async function saveCachedTasks(tasks: Task[]): Promise<void> {
   try {
     await tasksStore.setItem(TASKS_KEY, tasks);
-  } catch {
-    /* quota or unavailable — ignore */
-  }
+  } catch {}
 }
 
 export async function getOutbox(): Promise<OutboxOp[]> {
@@ -43,7 +41,6 @@ export async function getOutbox(): Promise<OutboxOp[]> {
   await outboxStore.iterate<OutboxOp, void>((value) => {
     ops.push(value);
   });
-  // Preserve insertion order via timestamp prefix in id
   ops.sort((a, b) => a.id.localeCompare(b.id));
   return ops;
 }

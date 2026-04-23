@@ -14,7 +14,6 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
   const redirect = new URLSearchParams(window.location.search).get("redirect") || "/";
 
   useEffect(() => {
@@ -32,11 +31,7 @@ export default function Auth() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: `${window.location.origin}/` },
-        });
+        const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/` } });
         if (error) throw error;
         toast.success("Account created — check your email to verify, then sign in.");
       } else {
@@ -53,72 +48,20 @@ export default function Auth() {
 
   return (
     <main className="min-h-dvh flex items-center justify-center p-6 bg-background">
-      <div className="absolute inset-0 -z-10 opacity-40 pointer-events-none"
-           style={{
-             backgroundImage:
-               "radial-gradient(60% 40% at 50% 0%, hsl(var(--primary) / 0.25), transparent 70%)",
-           }}
-      />
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-sm"
-      >
+      <div className="absolute inset-0 -z-10 opacity-40 pointer-events-none" style={{ backgroundImage: "radial-gradient(60% 40% at 50% 0%, hsl(var(--primary) / 0.25), transparent 70%)" }} />
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-10">
-          <img
-            src={logo}
-            alt="What's Today? logo"
-            className="size-24 rounded-3xl mb-5 object-cover shadow-glow"
-          />
-          <h1 className="text-3xl font-bold tracking-tight">What's Today?</h1>
-          <p className="text-muted-foreground text-sm mt-1 tracking-wide uppercase">
-            {mode === "signin" ? "Sign in to continue" : "Create your account"}
-          </p>
+          <img src={logo} alt="TodoFlow logo" className="size-24 rounded-3xl mb-5 object-cover shadow-glow" />
+          <h1 className="text-3xl font-bold tracking-tight">TodoFlow</h1>
+          <p className="text-muted-foreground text-sm mt-1 tracking-wide uppercase">{mode === "signin" ? "Sign in to your workspace" : "Create your account"}</p>
         </div>
-
         <form onSubmit={submit} className="space-y-4 glass-bezel p-6 rounded-3xl">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              required
-              minLength={6}
-              autoComplete={mode === "signin" ? "current-password" : "new-password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
-          <Button type="submit" disabled={loading} variant="velocity" size="lg" className="w-full">
-            {loading ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
-          </Button>
+          <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" /></div>
+          <div className="space-y-2"><Label htmlFor="password">Password</Label><Input id="password" type="password" required minLength={6} autoComplete={mode === "signin" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" /></div>
+          <Button type="submit" disabled={loading} variant="velocity" size="lg" className="w-full">{loading ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}</Button>
         </form>
-
-        <button
-          type="button"
-          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-          className="w-full mt-6 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {mode === "signin" ? "No account? Create one" : "Have an account? Sign in"}
-        </button>
-
-        <p className="text-center text-[11px] text-muted-foreground mt-12 tracking-widest uppercase">
-          Build By SU1000&amp;SK900
-        </p>
+        <button type="button" onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="w-full mt-6 text-sm text-muted-foreground hover:text-foreground transition-colors">{mode === "signin" ? "No account? Create one" : "Have an account? Sign in"}</button>
+        <p className="text-center text-[11px] text-muted-foreground mt-12 tracking-widest uppercase">Build By SU1000&amp;SK900</p>
       </motion.div>
     </main>
   );
