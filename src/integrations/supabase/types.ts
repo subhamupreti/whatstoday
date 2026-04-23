@@ -62,6 +62,7 @@ export type Database = {
           created_at: string
           designation: string | null
           display_name: string | null
+          email: string | null
           id: string
           phone: string | null
           updated_at: string
@@ -72,6 +73,7 @@ export type Database = {
           created_at?: string
           designation?: string | null
           display_name?: string | null
+          email?: string | null
           id?: string
           phone?: string | null
           updated_at?: string
@@ -82,6 +84,7 @@ export type Database = {
           created_at?: string
           designation?: string | null
           display_name?: string | null
+          email?: string | null
           id?: string
           phone?: string | null
           updated_at?: string
@@ -180,6 +183,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          assigned_to_user_id: string | null
           completed_at: string | null
           created_at: string
           description: string | null
@@ -192,8 +196,10 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          workspace_id: string
         }
         Insert: {
+          assigned_to_user_id?: string | null
           completed_at?: string | null
           created_at?: string
           description?: string | null
@@ -206,8 +212,10 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          workspace_id: string
         }
         Update: {
+          assigned_to_user_id?: string | null
           completed_at?: string | null
           created_at?: string
           description?: string | null
@@ -220,6 +228,100 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
+      workspace_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by_user_id: string | null
+          created_at: string
+          email: string
+          id: string
+          invited_by_user_id: string
+          role: Database["public"]["Enums"]["workspace_role"]
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by_user_id?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          invited_by_user_id: string
+          role?: Database["public"]["Enums"]["workspace_role"]
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by_user_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by_user_id?: string
+          role?: Database["public"]["Enums"]["workspace_role"]
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
+      workspace_members: {
+        Row: {
+          created_at: string
+          id: string
+          invited_by_user_id: string | null
+          role: Database["public"]["Enums"]["workspace_role"]
+          updated_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_by_user_id?: string | null
+          role?: Database["public"]["Enums"]["workspace_role"]
+          updated_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_by_user_id?: string | null
+          role?: Database["public"]["Enums"]["workspace_role"]
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
+      workspaces: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_user_id: string
+          slug: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_user_id: string
+          slug?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_user_id?: string
+          slug?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -228,6 +330,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_workspace_invitation: {
+        Args: { _invitation_id: string }
+        Returns: string
+      }
+      can_manage_workspace: {
+        Args: { _user_id: string; _workspace_id: string }
+        Returns: boolean
+      }
       create_task_bundle_share: {
         Args: {
           _role?: Database["public"]["Enums"]["share_role"]
@@ -239,6 +349,15 @@ export type Database = {
         Args: {
           _role?: Database["public"]["Enums"]["share_role"]
           _task_id: string
+        }
+        Returns: string
+      }
+      create_workspace: { Args: { _name: string }; Returns: string }
+      create_workspace_invitation: {
+        Args: {
+          _email: string
+          _role?: Database["public"]["Enums"]["workspace_role"]
+          _workspace_id: string
         }
         Returns: string
       }
@@ -274,8 +393,20 @@ export type Database = {
         Args: { _task_id: string; _user_id: string }
         Returns: boolean
       }
+      has_workspace_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["workspace_role"]
+          _user_id: string
+          _workspace_id: string
+        }
+        Returns: boolean
+      }
       is_task_owner: {
         Args: { _task_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_workspace_member: {
+        Args: { _user_id: string; _workspace_id: string }
         Returns: boolean
       }
       join_task_bundle_by_code: { Args: { _code: string }; Returns: number }
@@ -303,6 +434,7 @@ export type Database = {
       share_role: "viewer" | "completer"
       task_priority: "low" | "medium" | "high"
       task_status: "pending" | "completed"
+      workspace_role: "owner" | "admin" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -434,6 +566,7 @@ export const Constants = {
       share_role: ["viewer", "completer"],
       task_priority: ["low", "medium", "high"],
       task_status: ["pending", "completed"],
+      workspace_role: ["owner", "admin", "member"],
     },
   },
 } as const
