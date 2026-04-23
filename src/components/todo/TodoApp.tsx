@@ -110,7 +110,7 @@ export function TodoApp({ user }: { user: User }) {
         tags: op.payload.tags ?? [],
         due_date: op.payload.due_date ?? null,
         assigned_to_user_id: op.payload.assigned_to_user_id ?? null,
-      });
+      } as any);
       return !error;
     }
     if (op.kind === "update") {
@@ -219,7 +219,7 @@ export function TodoApp({ user }: { user: User }) {
           tags: payload.tags ?? [],
           due_date: payload.due_date ?? null,
           assigned_to_user_id: payload.assigned_to_user_id ?? null,
-        });
+        } as any);
         if (error) { await enqueue({ kind: "create", tempId, payload: insertPayload }); await refreshPending(); toast.message("Saved offline — will sync"); }
         else toast.success("Task added");
       } else {
