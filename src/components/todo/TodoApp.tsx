@@ -187,8 +187,14 @@ export function TodoApp({ user }: { user: User }) {
       setTasks((t) => t.map((x) => (x.id === id ? { ...x, ...patch, updated_at: nowIso } : x)));
       if (isOnline()) {
         const { error } = await supabase.from("tasks").update(patch).eq("id", id);
-        if (error) { await enqueue({ kind: "update", taskId: id, patch }); await refreshPending(); toast.message("Saved offline — will sync"); }
-        else toast.success("Task updated");
+        if (error) {
+          if (error.message?.toLowerCase().includes("network") || error.message?.toLowerCase().includes("fetch")) {
+            await enqueue({ kind: "update", taskId: id, patch }); await refreshPending(); toast.message("Saved offline — will sync");
+          } else {
+            toast.error(error.message);
+            return;
+          }
+        } else toast.success("Task updated");
       } else {
         await enqueue({ kind: "update", taskId: id, patch }); await refreshPending(); toast.message("Saved offline — will sync");
       }
@@ -214,6 +220,7 @@ export function TodoApp({ user }: { user: User }) {
       if (isOnline()) {
         const { error } = await supabase.from("tasks").insert({
           workspace_id: payload.workspace_id,
+          user_id: user.id,
           title: payload.title,
           description: payload.description ?? null,
           priority: payload.priority ?? "medium",
@@ -221,8 +228,16 @@ export function TodoApp({ user }: { user: User }) {
           due_date: payload.due_date ?? null,
           assigned_to_user_id: payload.assigned_to_user_id ?? null,
         } as any);
-        if (error) { await enqueue({ kind: "create", tempId, payload: insertPayload }); await refreshPending(); toast.message("Saved offline — will sync"); }
-        else toast.success("Task added");
+        if (error) {
+          // Roll back optimistic insert
+          setTasks((t) => t.filter((x) => x.id !== tempId));
+          if (error.message?.toLowerCase().includes("network") || error.message?.toLowerCase().includes("fetch")) {
+            await enqueue({ kind: "create", tempId, payload: insertPayload }); await refreshPending(); toast.message("Saved offline — will sync");
+          } else {
+            toast.error(error.message);
+            return;
+          }
+        } else toast.success("Task added");
       } else {
         await enqueue({ kind: "create", tempId, payload: insertPayload }); await refreshPending(); toast.message("Saved offline — will sync");
       }
