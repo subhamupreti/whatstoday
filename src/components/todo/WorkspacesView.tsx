@@ -39,6 +39,7 @@ interface Props {
   onAcceptInvitation: (invitationId: string) => Promise<boolean>;
   onRejectInvitation: (invitationId: string) => Promise<boolean>;
   onLeaveWorkspace: (workspaceId: string) => Promise<boolean>;
+  onRemoveMember: (workspaceId: string, memberUserId: string) => Promise<boolean>;
 }
 
 export function WorkspacesView({
@@ -54,6 +55,7 @@ export function WorkspacesView({
   onAcceptInvitation,
   onRejectInvitation,
   onLeaveWorkspace,
+  onRemoveMember,
 }: Props) {
   const [presetName, setPresetName] = useState<PresetName>("Personal");
   const [customName, setCustomName] = useState("");
