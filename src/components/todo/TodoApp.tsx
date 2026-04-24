@@ -51,6 +51,8 @@ export function TodoApp({ user }: { user: User }) {
     createWorkspace,
     inviteMember,
     acceptInvitation,
+    rejectInvitation,
+    leaveWorkspace,
   } = useWorkspaces(user.id);
 
   useOverdueAlerts(tasks);
