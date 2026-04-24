@@ -303,6 +303,7 @@ export function useWorkspaces(userId: string | undefined) {
     acceptInvitation,
     rejectInvitation,
     leaveWorkspace,
+    removeMember,
     refetch: fetchAll,
   };
 }
