@@ -306,7 +306,6 @@ export function TodoApp({ user }: { user: User }) {
             <div className="flex items-start justify-between gap-3 mb-3">
               <div>
                 <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">{view === "today" ? "WHAT'S TODAY?" : heading}</h1>
-                {activeWorkspace && view !== "workspaces" && <p className="mt-2 text-sm text-muted-foreground">Workspace · {activeWorkspace.name}</p>}
               </div>
               <div className="flex items-center gap-2 mt-2 shrink-0">
                 <NotificationBell invitations={incomingInvitations} onAccept={acceptInvitation} />

@@ -266,6 +266,26 @@ export function useWorkspaces(userId: string | undefined) {
     return true;
   };
 
+  const removeMember = async (workspaceId: string, memberUserId: string) => {
+    const ws = workspaces.find((w) => w.id === workspaceId);
+    if (ws && ws.owner_user_id === memberUserId) {
+      toast.error("The workspace owner can't be removed");
+      return false;
+    }
+    const { error } = await sb
+      .from("workspace_members")
+      .delete()
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", memberUserId);
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    toast.success("Member removed");
+    await fetchAll();
+    return true;
+  };
+
   return {
     workspaces,
     members,
