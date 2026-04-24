@@ -16,6 +16,7 @@ import { ShareDialog } from "./ShareDialog";
 import { BulkShareDialog } from "./BulkShareDialog";
 import { SelectionToolbar } from "./SelectionToolbar";
 import { TaskDetailSheet } from "./TaskDetailSheet";
+import { NotificationBell } from "./NotificationBell";
 import { useOverdueAlerts } from "@/hooks/useOverdueAlerts";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { Plus, WifiOff, RefreshCw, CheckSquare } from "lucide-react";
@@ -104,6 +105,7 @@ export function TodoApp({ user }: { user: User }) {
     if (op.kind === "create") {
       const { error } = await supabase.from("tasks").insert({
         workspace_id: op.payload.workspace_id,
+        user_id: op.payload.user_id,
         title: op.payload.title,
         description: op.payload.description ?? null,
         priority: op.payload.priority ?? "medium",
@@ -186,8 +188,14 @@ export function TodoApp({ user }: { user: User }) {
       setTasks((t) => t.map((x) => (x.id === id ? { ...x, ...patch, updated_at: nowIso } : x)));
       if (isOnline()) {
         const { error } = await supabase.from("tasks").update(patch).eq("id", id);
-        if (error) { await enqueue({ kind: "update", taskId: id, patch }); await refreshPending(); toast.message("Saved offline — will sync"); }
-        else toast.success("Task updated");
+        if (error) {
+          if (error.message?.toLowerCase().includes("network") || error.message?.toLowerCase().includes("fetch")) {
+            await enqueue({ kind: "update", taskId: id, patch }); await refreshPending(); toast.message("Saved offline — will sync");
+          } else {
+            toast.error(error.message);
+            return;
+          }
+        } else toast.success("Task updated");
       } else {
         await enqueue({ kind: "update", taskId: id, patch }); await refreshPending(); toast.message("Saved offline — will sync");
       }
@@ -213,6 +221,7 @@ export function TodoApp({ user }: { user: User }) {
       if (isOnline()) {
         const { error } = await supabase.from("tasks").insert({
           workspace_id: payload.workspace_id,
+          user_id: user.id,
           title: payload.title,
           description: payload.description ?? null,
           priority: payload.priority ?? "medium",
@@ -220,8 +229,16 @@ export function TodoApp({ user }: { user: User }) {
           due_date: payload.due_date ?? null,
           assigned_to_user_id: payload.assigned_to_user_id ?? null,
         } as any);
-        if (error) { await enqueue({ kind: "create", tempId, payload: insertPayload }); await refreshPending(); toast.message("Saved offline — will sync"); }
-        else toast.success("Task added");
+        if (error) {
+          // Roll back optimistic insert
+          setTasks((t) => t.filter((x) => x.id !== tempId));
+          if (error.message?.toLowerCase().includes("network") || error.message?.toLowerCase().includes("fetch")) {
+            await enqueue({ kind: "create", tempId, payload: insertPayload }); await refreshPending(); toast.message("Saved offline — will sync");
+          } else {
+            toast.error(error.message);
+            return;
+          }
+        } else toast.success("Task added");
       } else {
         await enqueue({ kind: "create", tempId, payload: insertPayload }); await refreshPending(); toast.message("Saved offline — will sync");
       }
@@ -286,14 +303,17 @@ export function TodoApp({ user }: { user: User }) {
             <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p>
             <div className="flex items-start justify-between gap-3 mb-3">
               <div>
-                <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">{view === "today" ? "TodoFlow" : heading}</h1>
+                <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">{view === "today" ? "WHAT'S TODAY?" : heading}</h1>
                 {activeWorkspace && view !== "workspaces" && <p className="mt-2 text-sm text-muted-foreground">Workspace · {activeWorkspace.name}</p>}
               </div>
-              {view !== "settings" && view !== "workspaces" && !selectMode && (
-                <button onClick={() => enterSelect()} className="shrink-0 mt-2 inline-flex items-center gap-1.5 rounded-full glass-bezel px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors" aria-label="Select tasks">
-                  <CheckSquare size={13} /> Select
-                </button>
-              )}
+              <div className="flex items-center gap-2 mt-2 shrink-0">
+                <NotificationBell invitations={incomingInvitations} onAccept={acceptInvitation} />
+                {view !== "settings" && view !== "workspaces" && !selectMode && (
+                  <button onClick={() => enterSelect()} className="inline-flex items-center gap-1.5 rounded-full glass-bezel px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors" aria-label="Select tasks">
+                    <CheckSquare size={13} /> Select
+                  </button>
+                )}
+              </div>
             </div>
             {(!online || pendingCount > 0) && <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider">{!online ? <><WifiOff size={12} className="text-muted-foreground" /><span className="text-muted-foreground">Offline</span></> : <><RefreshCw size={12} className="text-primary animate-spin" /><span className="text-primary">Syncing</span></>}{pendingCount > 0 && <span className="text-muted-foreground normal-case tracking-normal">· {pendingCount} pending</span>}</div>}
             {!(!online || pendingCount > 0) && <div className="mb-8" />}
