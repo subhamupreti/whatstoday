@@ -230,6 +230,42 @@ export function useWorkspaces(userId: string | undefined) {
     return true;
   };
 
+  const rejectInvitation = async (invitationId: string) => {
+    const { error } = await sb.from("workspace_invitations").delete().eq("id", invitationId);
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    toast.success("Invitation removed");
+    await fetchAll();
+    return true;
+  };
+
+  const leaveWorkspace = async (workspaceId: string) => {
+    if (!userId) return false;
+    const ws = workspaces.find((w) => w.id === workspaceId);
+    if (ws && ws.owner_user_id === userId) {
+      toast.error("Owners can't leave their own workspace");
+      return false;
+    }
+    const { error } = await sb
+      .from("workspace_members")
+      .delete()
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", userId);
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    toast.success("Left workspace");
+    if (activeWorkspaceId === workspaceId) {
+      const next = workspaces.find((w) => w.id !== workspaceId)?.id ?? null;
+      setActiveWorkspaceId(next);
+    }
+    await fetchAll();
+    return true;
+  };
+
   return {
     workspaces,
     members,
@@ -245,6 +281,8 @@ export function useWorkspaces(userId: string | undefined) {
     createWorkspace,
     inviteMember,
     acceptInvitation,
+    rejectInvitation,
+    leaveWorkspace,
     refetch: fetchAll,
   };
 }

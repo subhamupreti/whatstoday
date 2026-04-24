@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, CheckCircle2, Mail, Plus, Shield, UserPlus, Users } from "lucide-react";
+import { Building2, CheckCircle2, LogOut, Mail, Plus, Shield, UserPlus, Users, X } from "lucide-react";
 import type { Workspace, WorkspaceInvitation, WorkspaceMember, WorkspaceRole } from "@/types/workspace";
+
+const PRESET_NAMES = ["Personal", "Official", "Other"] as const;
+type PresetName = typeof PRESET_NAMES[number];
 
 function initials(name?: string | null, email?: string | null) {
   const source = name?.trim() || email?.trim() || "?";
@@ -24,6 +27,7 @@ function roleTone(role: WorkspaceRole) {
 }
 
 interface Props {
+  currentUserId: string;
   workspaces: Workspace[];
   activeWorkspaceId: string | null;
   activeMembers: WorkspaceMember[];
@@ -33,9 +37,12 @@ interface Props {
   onCreateWorkspace: (name: string) => Promise<string | null>;
   onInviteMember: (workspaceId: string, email: string, role: WorkspaceRole) => Promise<boolean>;
   onAcceptInvitation: (invitationId: string) => Promise<boolean>;
+  onRejectInvitation: (invitationId: string) => Promise<boolean>;
+  onLeaveWorkspace: (workspaceId: string) => Promise<boolean>;
 }
 
 export function WorkspacesView({
+  currentUserId,
   workspaces,
   activeWorkspaceId,
   activeMembers,
@@ -45,24 +52,34 @@ export function WorkspacesView({
   onCreateWorkspace,
   onInviteMember,
   onAcceptInvitation,
+  onRejectInvitation,
+  onLeaveWorkspace,
 }: Props) {
-  const [workspaceName, setWorkspaceName] = useState("");
+  const [presetName, setPresetName] = useState<PresetName>("Personal");
+  const [customName, setCustomName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<WorkspaceRole>("member");
   const [creating, setCreating] = useState(false);
   const [inviting, setInviting] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
   const activeWorkspace = useMemo(
     () => workspaces.find((workspace) => workspace.id === activeWorkspaceId) ?? null,
     [activeWorkspaceId, workspaces],
   );
+  const isOwner = activeWorkspace?.owner_user_id === currentUserId;
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!workspaceName.trim()) return;
+    const name = presetName === "Other" ? customName.trim() : presetName;
+    if (!name) return;
     setCreating(true);
-    const created = await onCreateWorkspace(workspaceName.trim());
+    const created = await onCreateWorkspace(name);
     setCreating(false);
-    if (created) setWorkspaceName("");
+    if (created) {
+      setPresetName("Personal");
+      setCustomName("");
+    }
   };
 
   const invite = async (e: React.FormEvent) => {
@@ -72,6 +89,26 @@ export function WorkspacesView({
     const ok = await onInviteMember(activeWorkspaceId, inviteEmail.trim(), inviteRole);
     setInviting(false);
     if (ok) setInviteEmail("");
+  };
+
+  const handleReject = async (id: string) => {
+    setBusyId(id);
+    await onRejectInvitation(id);
+    setBusyId(null);
+  };
+
+  const handleAccept = async (id: string) => {
+    setBusyId(id);
+    await onAcceptInvitation(id);
+    setBusyId(null);
+  };
+
+  const handleLeave = async () => {
+    if (!activeWorkspaceId) return;
+    if (!confirm(`Leave workspace "${activeWorkspace?.name}"? You won't see its tasks anymore.`)) return;
+    setBusyId(activeWorkspaceId);
+    await onLeaveWorkspace(activeWorkspaceId);
+    setBusyId(null);
   };
 
   return (
@@ -108,6 +145,19 @@ export function WorkspacesView({
             <p className="mt-1 text-2xl font-bold">{activeMembers.length}</p>
           </div>
         </div>
+
+        {activeWorkspace && !isOwner && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full rounded-2xl text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+            onClick={handleLeave}
+            disabled={busyId === activeWorkspaceId}
+          >
+            <LogOut size={16} className="mr-2" />
+            {busyId === activeWorkspaceId ? "Leaving…" : `Leave "${activeWorkspace.name}"`}
+          </Button>
+        )}
       </section>
 
       <section className="glass-bezel rounded-3xl p-5 space-y-4">
@@ -115,20 +165,44 @@ export function WorkspacesView({
           <Plus size={18} className="text-primary" />
           <h3 className="font-semibold">Create a workspace</h3>
         </div>
-        <form onSubmit={create} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-          <div className="space-y-2">
-            <Label htmlFor="workspace-name">Workspace name</Label>
-            <Input
-              id="workspace-name"
-              value={workspaceName}
-              onChange={(e) => setWorkspaceName(e.target.value)}
-              placeholder="Marketing, Design, Startup"
-              className="h-11 rounded-2xl"
-            />
+        <form onSubmit={create} className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-[160px_minmax(0,1fr)_auto] sm:items-end">
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <Select value={presetName} onValueChange={(v) => setPresetName(v as PresetName)}>
+                <SelectTrigger className="h-11 rounded-2xl bg-card">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRESET_NAMES.map((n) => (
+                    <SelectItem key={n} value={n}>{n}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {presetName === "Other" ? (
+              <div className="space-y-2">
+                <Label htmlFor="workspace-name">Custom name</Label>
+                <Input
+                  id="workspace-name"
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="Marketing, Design, Startup…"
+                  className="h-11 rounded-2xl"
+                />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Preview</Label>
+                <div className="h-11 rounded-2xl border border-border bg-card/60 px-4 flex items-center text-sm text-muted-foreground">
+                  Will create "{presetName}"
+                </div>
+              </div>
+            )}
+            <Button type="submit" variant="velocity" className="h-11 rounded-2xl" disabled={creating || (presetName === "Other" && !customName.trim())}>
+              {creating ? "Creating…" : "Create"}
+            </Button>
           </div>
-          <Button type="submit" variant="velocity" className="h-11 rounded-2xl" disabled={creating}>
-            {creating ? "Creating…" : "Create"}
-          </Button>
         </form>
       </section>
 
@@ -175,11 +249,23 @@ export function WorkspacesView({
             <div className="space-y-2">
               {managedInvitations.map((invitation) => (
                 <div key={invitation.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border px-3 py-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{invitation.email}</p>
-                    <p className="text-xs text-muted-foreground">{invitation.role}</p>
+                  <div className="min-w-0 flex items-center gap-2">
+                    <Mail size={14} className="shrink-0 text-muted-foreground" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{invitation.email}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{invitation.role}</p>
+                    </div>
                   </div>
-                  <Mail size={16} className="shrink-0 text-muted-foreground" />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => handleReject(invitation.id)}
+                    disabled={busyId === invitation.id}
+                  >
+                    <X size={14} className="mr-1" />
+                    Cancel
+                  </Button>
                 </div>
               ))}
             </div>
@@ -196,13 +282,30 @@ export function WorkspacesView({
           <div className="space-y-3">
             {incomingInvitations.map((invitation) => (
               <div key={invitation.id} className="rounded-2xl border border-border bg-card/60 p-4 flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-medium">{invitation.email}</p>
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{invitation.email}</p>
                   <p className="text-xs text-muted-foreground">Join as {invitation.role}</p>
                 </div>
-                <Button variant="velocity" className="rounded-2xl" onClick={() => onAcceptInvitation(invitation.id)}>
-                  Join
-                </Button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => handleReject(invitation.id)}
+                    disabled={busyId === invitation.id}
+                  >
+                    <X size={14} className="mr-1" /> Reject
+                  </Button>
+                  <Button
+                    variant="velocity"
+                    size="sm"
+                    className="rounded-full"
+                    onClick={() => handleAccept(invitation.id)}
+                    disabled={busyId === invitation.id}
+                  >
+                    Join
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
