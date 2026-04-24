@@ -51,8 +51,8 @@ export default function Auth() {
       <div className="absolute inset-0 -z-10 opacity-40 pointer-events-none" style={{ backgroundImage: "radial-gradient(60% 40% at 50% 0%, hsl(var(--primary) / 0.25), transparent 70%)" }} />
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-10">
-          <img src={logo} alt="TodoFlow logo" className="size-24 rounded-3xl mb-5 object-cover shadow-glow" />
-          <h1 className="text-3xl font-bold tracking-tight">TodoFlow</h1>
+          <img src={logo} alt="What's Today? logo" className="size-24 rounded-3xl mb-5 object-cover shadow-glow" />
+          <h1 className="text-3xl font-bold tracking-tight">WHAT'S TODAY?</h1>
           <p className="text-muted-foreground text-sm mt-1 tracking-wide uppercase">{mode === "signin" ? "Sign in to your workspace" : "Create your account"}</p>
         </div>
         <form onSubmit={submit} className="space-y-4 glass-bezel p-6 rounded-3xl">
