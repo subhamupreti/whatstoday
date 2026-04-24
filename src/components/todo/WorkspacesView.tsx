@@ -70,6 +70,16 @@ export function WorkspacesView({
     [activeWorkspaceId, workspaces],
   );
   const isOwner = activeWorkspace?.owner_user_id === currentUserId;
+  const myMembership = activeMembers.find((m) => m.user_id === currentUserId);
+  const canManage = isOwner || myMembership?.role === "admin";
+
+  const handleRemove = async (memberUserId: string, name: string) => {
+    if (!activeWorkspaceId) return;
+    if (!confirm(`Remove ${name} from this workspace?`)) return;
+    setBusyId(memberUserId);
+    await onRemoveMember(activeWorkspaceId, memberUserId);
+    setBusyId(null);
+  };
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -320,23 +330,40 @@ export function WorkspacesView({
           <h3 className="font-semibold">Members</h3>
         </div>
         <div className="space-y-3">
-          {activeMembers.map((member) => (
-            <div key={member.id} className="rounded-2xl border border-border bg-card/60 px-4 py-3 flex items-center gap-3">
-              <Avatar className="size-11 ring-1 ring-border">
-                <AvatarImage src={member.profile?.avatar_url ?? undefined} alt={member.profile?.display_name ?? member.profile?.email ?? "Member avatar"} />
-                <AvatarFallback className="bg-secondary font-semibold">
-                  {initials(member.profile?.display_name, member.profile?.email)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{member.profile?.display_name || member.profile?.email || "Workspace member"}</p>
-                <p className="text-xs text-muted-foreground truncate">{member.profile?.designation || member.profile?.email || "No profile details yet"}</p>
+          {activeMembers.map((member) => {
+            const displayName = member.profile?.display_name || member.profile?.email || "Workspace member";
+            const showRemove = canManage && member.user_id !== currentUserId && member.role !== "owner";
+            return (
+              <div key={member.id} className="rounded-2xl border border-border bg-card/60 px-4 py-3 flex items-center gap-3">
+                <Avatar className="size-11 ring-1 ring-border">
+                  <AvatarImage src={member.profile?.avatar_url ?? undefined} alt={member.profile?.display_name ?? member.profile?.email ?? "Member avatar"} />
+                  <AvatarFallback className="bg-secondary font-semibold">
+                    {initials(member.profile?.display_name, member.profile?.email)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{displayName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{member.profile?.designation || member.profile?.email || "No profile details yet"}</p>
+                </div>
+                <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${roleTone(member.role)}`}>
+                  {member.role === "owner" ? <span className="inline-flex items-center gap-1"><Shield size={10} /> Owner</span> : member.role}
+                </span>
+                {showRemove && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="size-8 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => handleRemove(member.user_id, displayName)}
+                    disabled={busyId === member.user_id}
+                    aria-label={`Remove ${displayName}`}
+                    title="Remove member"
+                  >
+                    <X size={15} />
+                  </Button>
+                )}
               </div>
-              <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${roleTone(member.role)}`}>
-                {member.role === "owner" ? <span className="inline-flex items-center gap-1"><Shield size={10} /> Owner</span> : member.role}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
     </div>
