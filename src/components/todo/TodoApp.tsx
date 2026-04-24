@@ -16,6 +16,7 @@ import { ShareDialog } from "./ShareDialog";
 import { BulkShareDialog } from "./BulkShareDialog";
 import { SelectionToolbar } from "./SelectionToolbar";
 import { TaskDetailSheet } from "./TaskDetailSheet";
+import { NotificationBell } from "./NotificationBell";
 import { useOverdueAlerts } from "@/hooks/useOverdueAlerts";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { Plus, WifiOff, RefreshCw, CheckSquare } from "lucide-react";
