@@ -105,6 +105,7 @@ export function TodoApp({ user }: { user: User }) {
     if (op.kind === "create") {
       const { error } = await supabase.from("tasks").insert({
         workspace_id: op.payload.workspace_id,
+        user_id: op.payload.user_id,
         title: op.payload.title,
         description: op.payload.description ?? null,
         priority: op.payload.priority ?? "medium",
@@ -302,14 +303,17 @@ export function TodoApp({ user }: { user: User }) {
             <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p>
             <div className="flex items-start justify-between gap-3 mb-3">
               <div>
-                <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">{view === "today" ? "TodoFlow" : heading}</h1>
+                <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">{view === "today" ? "WHAT'S TODAY?" : heading}</h1>
                 {activeWorkspace && view !== "workspaces" && <p className="mt-2 text-sm text-muted-foreground">Workspace · {activeWorkspace.name}</p>}
               </div>
-              {view !== "settings" && view !== "workspaces" && !selectMode && (
-                <button onClick={() => enterSelect()} className="shrink-0 mt-2 inline-flex items-center gap-1.5 rounded-full glass-bezel px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors" aria-label="Select tasks">
-                  <CheckSquare size={13} /> Select
-                </button>
-              )}
+              <div className="flex items-center gap-2 mt-2 shrink-0">
+                <NotificationBell invitations={incomingInvitations} onAccept={acceptInvitation} />
+                {view !== "settings" && view !== "workspaces" && !selectMode && (
+                  <button onClick={() => enterSelect()} className="inline-flex items-center gap-1.5 rounded-full glass-bezel px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors" aria-label="Select tasks">
+                    <CheckSquare size={13} /> Select
+                  </button>
+                )}
+              </div>
             </div>
             {(!online || pendingCount > 0) && <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider">{!online ? <><WifiOff size={12} className="text-muted-foreground" /><span className="text-muted-foreground">Offline</span></> : <><RefreshCw size={12} className="text-primary animate-spin" /><span className="text-primary">Syncing</span></>}{pendingCount > 0 && <span className="text-muted-foreground normal-case tracking-normal">· {pendingCount} pending</span>}</div>}
             {!(!online || pendingCount > 0) && <div className="mb-8" />}
